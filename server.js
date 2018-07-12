@@ -100,29 +100,41 @@ function buildImage(command){
 	encoder.setRepeat(0);	//0 for repeat, -1 for no-repeat
 	encoder.setDelay(75); 	//frame delay in ms
 	encoder.setQuality(10);	//image quality, 10 is default
-	var image = jimp.read("assets/map.png", function(err, img){
+	var img = new jimp(400, 200, 0xFFFFFFFF, function(err, bg){
 		if (err) throw err;
-		img.crop(0, 0, 400, 200);
-		console.log("done with first frame image");
-		return img;
-	});
-	var playerImage = jimp.read("assets/player.png", function(err, img){
-		if (err) throw err;
-		//var frame = img.crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
-		console.log("done with player image");
-		
-		var p = img.clone();
-		var m = image;
-		
-		var pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
-		m.composite(pFrame, 200, 100);
-		encoder.addFrame(m.bitmap.data);
-		gameState.playerSprite.currentFrame++;
-		pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
-		m.composite(pFrame, 200, 100);
-		encoder.addFrame(m.bitmap.data);
-		console.log("done with gif");
-		encoder.finish();
+		console.log("bg done");
+		jimp.read("assets/map.png", function(err, map){
+			if (err) throw err;
+			map.crop(0, 0, 400, 200);
+			console.log("done with map image");
+			var playerImage = jimp.read("assets/player.png", function(err, img){
+				if (err) throw err;
+				console.log("done with player image");
+				
+				var distance = 128;
+				var stepDistance = 4;
+				var i = 0;
+				
+				while (i <= distance){
+					var b = bg.clone();
+					var p = img.clone();
+					var m = map.clone();
+					
+					var pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
+					b.composite(m.clone(), i, 0);
+					b.composite(pFrame.clone(), 200, 100);
+					if (i == distance)
+						encoder.setDelay(1000);
+					encoder.addFrame(b.bitmap.data);
+					gameState.playerSprite.currentFrame++;
+					if (gameState.playerSprite.currentFrame > 1)
+						gameState.playerSprite.currentFrame = 0;
+					i += stepDistance;
+				}
+				console.log("done with gif");
+				encoder.finish();
+			});
+		});
 	});
 	//use image.composite to paste an image over a canvas
 }
