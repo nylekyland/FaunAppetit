@@ -100,26 +100,29 @@ function buildImage(command){
 	encoder.setRepeat(0);	//0 for repeat, -1 for no-repeat
 	encoder.setDelay(75); 	//frame delay in ms
 	encoder.setQuality(10);	//image quality, 10 is default
-	var image = new jimp(400, 200, 0xFFFFFFFF, function(err, img){
+	var image = jimp.read("assets/map.png", function(err, img){
 		if (err) throw err;
+		img.crop(0, 0, 400, 200);
 		console.log("done with first frame image");
 		return img;
 	});
-	var image2 = new jimp(400, 200, 0xFF0000FF, function(err, img){
+	var playerImage = jimp.read("assets/player.png", function(err, img){
 		if (err) throw err;
-		console.log("done with second frame image");
-		return img;
-	});
-	var playerImage = jimp.read("assets/orcim_pixel.png", function(err, img){
-		if (err) throw err;
-		img.crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
+		//var frame = img.crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
 		console.log("done with player image");
-		image.composite(img, 200, 100);
-		encoder.addFrame(image.bitmap.data); 
-		encoder.addFrame(image2.bitmap.data);
-		encoder.finish();
+		
+		var p = img.clone();
+		var m = image;
+		
+		var pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
+		m.composite(pFrame, 200, 100);
+		encoder.addFrame(m.bitmap.data);
+		gameState.playerSprite.currentFrame++;
+		pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
+		m.composite(pFrame, 200, 100);
+		encoder.addFrame(m.bitmap.data);
 		console.log("done with gif");
-		return img;
+		encoder.finish();
 	});
 	//use image.composite to paste an image over a canvas
 }

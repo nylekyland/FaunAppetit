@@ -1,10 +1,10 @@
 {
 	"currentState": "field",
 	"playerSprite":{
-		"width": 29,
-		"height": 27,
-		"spriteWidth": 29,
-		"spriteHeight": 27,
+		"width": 64,
+		"height": 32,
+		"spriteWidth": 32,
+		"spriteHeight": 32,
 		"currentFrame": 0,
 		"currentAnimation": 0
 	}
