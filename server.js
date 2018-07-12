@@ -98,16 +98,28 @@ function buildImage(command){
 	encoder.createReadStream().pipe(fs.createWriteStream("test.gif"))
 	encoder.start();
 	encoder.setRepeat(0);	//0 for repeat, -1 for no-repeat
-	encoder.setDelay(500); 	//frame delay in ms
+	encoder.setDelay(75); 	//frame delay in ms
 	encoder.setQuality(10);	//image quality, 10 is default
-	var image = new jimp(400, 200, 0xFFFFFFFF, function(err, image){
+	var image = new jimp(400, 200, 0xFFFFFFFF, function(err, img){
 		if (err) throw err;
+		console.log("done with first frame image");
+		return img;
 	});
-	var image2 = new jimp(400, 200, 0xFF0000FF, function(err, image){
+	var image2 = new jimp(400, 200, 0xFF0000FF, function(err, img){
 		if (err) throw err;
+		console.log("done with second frame image");
+		return img;
 	});
-	encoder.addFrame(image.bitmap.data);
-	encoder.addFrame(image2.bitmap.data);
-	encoder.finish();
+	var playerImage = jimp.read("assets/orcim_pixel.png", function(err, img){
+		if (err) throw err;
+		img.crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
+		console.log("done with player image");
+		image.composite(img, 200, 100);
+		encoder.addFrame(image.bitmap.data); 
+		encoder.addFrame(image2.bitmap.data);
+		encoder.finish();
+		console.log("done with gif");
+		return img;
+	});
 	//use image.composite to paste an image over a canvas
 }
