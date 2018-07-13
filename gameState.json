@@ -1,1 +1,147 @@
-{"currentState":"field","mapPosition":{"xPosition":-64,"yPosition":0},"player":{"xPosition":288,"yPosition":96},"playerSprite":{"width":64,"height":32,"spriteWidth":32,"spriteHeight":32,"currentFrame":1,"currentAnimation":0},"objects":[{"name":"tree","x":0,"y":0,"width":32,"height":32},{"name":"tree","x":32,"y":0,"width":32,"height":32},{"name":"tree","x":64,"y":0,"width":32,"height":32},{"name":"tree","x":96,"y":0,"width":32,"height":32},{"name":"tree","x":128,"y":0,"width":32,"height":32},{"name":"tree","x":160,"y":0,"width":32,"height":32},{"name":"tree","x":192,"y":0,"width":32,"height":32},{"name":"tree","x":224,"y":0,"width":32,"height":32},{"name":"tree","x":256,"y":0,"width":32,"height":32},{"name":"tree","x":288,"y":0,"width":32,"height":32},{"name":"tree","x":0,"y":32,"width":32,"height":32},{"name":"tree","x":0,"y":64,"width":32,"height":32},{"name":"tree","x":0,"y":96,"width":32,"height":32},{"name":"tree","x":288,"y":32,"width":32,"height":32},{"name":"tree","x":288,"y":64,"width":32,"height":32},{"name":"tree","x":288,"y":96,"width":32,"height":32}]}
+{
+  "currentState": "field",
+  "mapPosition": {
+    "xPosition": 0,
+    "yPosition": 68
+  },
+  "player": {
+    "xPosition": 160,
+    "yPosition": 96,
+	"width": 32,
+	"height": 32,
+    "direction": "left"
+  },
+  "playerSprite": {
+    "width": 64,
+    "height": 32,
+    "spriteWidth": 32,
+    "spriteHeight": 32,
+    "currentFrame": 1,
+    "currentAnimation": 0
+  },
+  "npcs": [
+    {
+      "id": 1,
+      "name": "test",
+      "x": 128,
+      "y": 96,
+      "width": 32,
+      "height": 32,
+      "dialog": "hello, this is a test!"
+    }
+  ],
+  "objects": [
+    {
+      "name": "tree",
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 32,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 64,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 96,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 128,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 160,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 192,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 224,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 256,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 288,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 0,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 0,
+      "y": 64,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 0,
+      "y": 96,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 288,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 288,
+      "y": 64,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "tree",
+      "x": 288,
+      "y": 96,
+      "width": 32,
+      "height": 32
+    }
+  ]
+}
