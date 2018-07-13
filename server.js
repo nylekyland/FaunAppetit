@@ -11,11 +11,11 @@ var tweets = [];
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
 
 //Get most recent bot tweet to determine search results for tweets since then
-T.get('search/tweets', {q: 'from:NintendoAmerica', count: 1, result_type: 'recent'}, function(err, data, response){
+T.get('search/tweets', {q: 'from:RubberNinja', count: 1, result_type: 'recent'}, function(err, data, response){
 	if (data.statuses.length > 0){
 		//A bot tweet was found, get all mentions since then
 		mostRecentBotTweet = data.statuses[0];
-		T.get('search/tweets', { q: 'to:NintendoAmerica', count: 100, since_id: mostRecentBotTweet.id }, function(err, data, response){
+		T.get('search/tweets', { q: 'to:RubberNinja', count: 100, since_id: mostRecentBotTweet.id }, function(err, data, response){
 			for (var i = 0; i < data.statuses.length; i++){
 				tweets.push(data.statuses[i]);
 			}
@@ -54,7 +54,7 @@ T.get('search/tweets', {q: 'from:NintendoAmerica', count: 1, result_type: 'recen
 function handleInput(string){
 	var inputText = '';
 	//Get the actual input text without the twitter stuff in it
-	var parts = string.split("@NintendoAmerica ");
+	var parts = string.split("@RubberNinja ");
 	if (parts && parts[1]){
 		inputText = parts[1].toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_\'`~()]/g,"").replace(/\s{2,}/g," ");
 		var commands = inputText.split(" ");
@@ -105,7 +105,6 @@ function buildImage(command){
 		console.log("bg done");
 		jimp.read("assets/map.png", function(err, map){
 			if (err) throw err;
-			map.crop(0, 0, 400, 200);
 			console.log("done with map image");
 			var playerImage = jimp.read("assets/player.png", function(err, img){
 				if (err) throw err;
@@ -115,7 +114,7 @@ function buildImage(command){
 				var stepDistance = 4;
 				var i = 0;
 				
-				while (i <= distance){
+				while (i < distance){
 					var b = bg.clone();
 					var p = img.clone();
 					var m = map.clone();
@@ -123,24 +122,33 @@ function buildImage(command){
 					var y = 0;
 					switch (command){
 						case "left":
-							x =-i;
+						if (checkCollisions(gameState.player.xPosition - i, gameState.player.yPosition, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight))
+							distance = i;
+						x = i;
 						break;
 						case "right":
-							x = i;
+						if (checkCollisions(gameState.player.xPosition + i, gameState.player.yPosition, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight))
+							distance = i;
+						x = -i;
 						break;
 						case "down":
-							y = -i;
-						break;
+						if (checkCollisions(gameState.player.xPosition, gameState.player.yPosition - i, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight))
+							distance = i;
+						y = -i;
 						case "up":
-							y = i;
+						if (checkCollisions(gameState.player.xPosition, gameState.player.yPosition + i, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight))
+							distance = i;
+						y = i;
 						break;
 					}
 					
+					if (i == distance){
+						encoder.setDelay(1500);
+						gameState.playerSprite.currentFrame = 0;
+					}
 					var pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
 					b.composite(m.clone(), gameState.mapPosition.xPosition + x, gameState.mapPosition.yPosition + y);
 					b.composite(pFrame.clone(), 192, 96);
-					if (i == distance)
-						encoder.setDelay(1000);
 					encoder.addFrame(b.bitmap.data);
 					gameState.playerSprite.currentFrame++;
 					if (gameState.playerSprite.currentFrame > 1)
@@ -177,4 +185,17 @@ function buildImage(command){
 		});
 	});
 	//use image.composite to paste an image over a canvas
+}
+
+function checkCollisions(x, y, width, height){
+	for (var i = 0; i < gameState.objects.length; i++){
+		if (x <= gameState.objects[i].x + gameState.objects[i].width &&
+		x + width >= gameState.objects[i].x &&
+		y <= gameState.objects[i].y + gameState.objects[i].height &&
+		y + height >= gameState.objects[i].y)
+		{
+			return true;
+		}
+	}
+	return false;
 }
