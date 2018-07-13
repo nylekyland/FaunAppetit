@@ -119,10 +119,26 @@ function buildImage(command){
 					var b = bg.clone();
 					var p = img.clone();
 					var m = map.clone();
+					var x = 0;
+					var y = 0;
+					switch (command){
+						case "left":
+							x =-i;
+						break;
+						case "right":
+							x = i;
+						break;
+						case "down":
+							y = -i;
+						break;
+						case "up":
+							y = i;
+						break;
+					}
 					
 					var pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
-					b.composite(m.clone(), i, 0);
-					b.composite(pFrame.clone(), 200, 100);
+					b.composite(m.clone(), gameState.mapPosition.xPosition + x, gameState.mapPosition.yPosition + y);
+					b.composite(pFrame.clone(), 192, 96);
 					if (i == distance)
 						encoder.setDelay(1000);
 					encoder.addFrame(b.bitmap.data);
@@ -133,6 +149,30 @@ function buildImage(command){
 				}
 				console.log("done with gif");
 				encoder.finish();
+				
+				switch(command){
+					case "left":
+						gameState.player.xPosition -= distance;
+						gameState.mapPosition.xPosition += distance;
+						break;
+					case "right":
+						gameState.player.xPosition += distance;
+						gameState.mapPosition.xPosition -= distance;
+						break;
+					case "up":
+						gameState.player.yPosition -= distance;
+						gameState.mapPosition.yPosition += distance;
+						break;
+					case "down":
+						gameState.player.yPosition += distance;
+						gameState.mapPosition.yPosition -= distance;
+						break;
+				}
+				//Save the JSON
+				var json = JSON.stringify(gameState);
+				fs.writeFile('gameState.json', json, 'utf8', function(err){
+					if (err) throw err;
+				});
 			});
 		});
 	});

@@ -1,11 +1,1 @@
-{
-	"currentState": "field",
-	"playerSprite":{
-		"width": 64,
-		"height": 32,
-		"spriteWidth": 32,
-		"spriteHeight": 32,
-		"currentFrame": 0,
-		"currentAnimation": 0
-	}
-}
+{"currentState":"field","mapPosition":{"xPosition":0,"yPosition":256},"player":{"xPosition":192,"yPosition":-160},"playerSprite":{"width":64,"height":32,"spriteWidth":32,"spriteHeight":32,"currentFrame":1,"currentAnimation":0},"fieldObjects":[{"name":"tree","x":0,"y":0,"width":32,"height":32}]}
