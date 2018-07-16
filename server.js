@@ -7,6 +7,7 @@ var T = new Twit(config);
 
 var mostRecentBotTweet = [];
 var tweets = [{"text":"@NintendoAmerica talk", "favorite_count":9999999}];
+var fontString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?:,"
 
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
 
@@ -227,28 +228,28 @@ function buildDialogImage(npcId){
 				var dialogBox = new jimp(250, 42, 0xEFEFEFFF, function(err, db){
 					if (err) throw err;
 					console.log("done with dialog box");
-					var font = jimp.read("assets/player.png", function(err, font){
+					var font = jimp.read("assets/font.png", function(err, font){
 						if (err) throw err;
 						//Find the NPC dialog based on the ID		
 						var npc = gameState.npcs.findIndex(function(element){
 							return element.id == npcId
 						});
 						if (npc != null){
-							var text = gameState.npcs[npc].dialog;
+							var text = gameState.npcs[npc].dialog.toUpperCase();
 							var buffer = "", bufferLineOne = "", bufferLineTwo = "";
 							var currentLine = 0, characterCount = 0;
 							var len = 15;
 							var lines = splitter(text, 15);
 							console.log(lines);
 							//Start the main loop of the gif, printing words onscreen letter by letter
-							while (buffer.length <= text.length){
+							while (currentLine < lines.length){
 								var b = bg.clone();
 								var p = player.clone();
 								var m = map.clone();
 								var d = db.clone();
 								var f = font.clone();
 								
-								if (buffer.length == text.length){
+								if (currentLine == lines.length && characterCount == lines[currentLine].length){
 									encoder.setDelay(1500);
 								}
 								else if (buffer.length == 0){
@@ -265,22 +266,24 @@ function buildDialogImage(npcId){
 									b.composite(d.clone(), 75, 158);
 									//line one
 									for (var i = 0; i < bufferLineOne.length; i++){
-										b.composite(f.clone().crop(0, 0, 16, 16), 80 + (16 * i), 158);	
+										b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i]) * 16, 0, 16, 16), 80 + (16 * i), 158);	
 									}
 									//line two
 									for (var i = 0; i < bufferLineTwo.length; i++){
-										b.composite(f.clone().crop(0, 0, 16, 16), 80 + (16 * i), 174);	
+										b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i]) * 16, 0, 16, 16), 80 + (16 * i), 174);	
 									}
 								}
 								encoder.addFrame(b.bitmap.data);
-								buffer += text[buffer.length];
+								console.log(bufferLineOne);
+								console.log(bufferLineTwo);
+								buffer += lines[currentLine][characterCount];
 								if (currentLine == 0)
-									bufferLineOne += text[bufferLineOne.length];
+									bufferLineOne += lines[currentLine][characterCount];
 								else{
-									bufferLineTwo += text[bufferLineTwo.length + (len * currentLine)];
+									bufferLineTwo += lines[currentLine][characterCount];
 								}
 								characterCount++;
-								if (characterCount >= len){
+								if (characterCount >= lines[currentLine].length){
 									characterCount = 0;
 									currentLine++;
 									if (currentLine > 1)
