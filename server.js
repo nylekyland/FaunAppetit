@@ -6,7 +6,7 @@ gifEncoder = require('gifencoder');
 var T = new Twit(config);
 
 var mostRecentBotTweet = [];
-var tweets = [{"text":"@NintendoAmerica talk", "favorite_count":9999999}];
+var tweets = [{"text":"@NintendoAmerica right 9", "favorite_count":9999999}];
 var fontString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?:,"
 
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
@@ -16,7 +16,7 @@ T.get('search/tweets', {q: 'from:NintendoAmerica', count: 1, result_type: 'recen
 	if (data.statuses.length > 0){
 		//A bot tweet was found, get all mentions since then
 		mostRecentBotTweet = data.statuses[0];
-		T.get('search/tweets', { q: 'to:NintendoAmerica', count: 100, since_id: mostRecentBotTweet.id }, function(err, data, response){
+		T.get('search/tweets', { q: 'to:NintendoAmerica', count: 10, since_id: mostRecentBotTweet.id }, function(err, data, response){
 			for (var i = 0; i < data.statuses.length; i++){
 				tweets.push(data.statuses[i]);
 			}
@@ -67,7 +67,7 @@ function handleInput(string){
 			//Scan tweet for first number that's between 1 and 9, inclusive. If not found, default movement to one square.
 			var num = 1;
 			var findNum = commands.find(function(element){
-				return typeof element == "number" && element >= 1 && element <= 9;
+				return parseInt(element) >= 1 && parseInt(element) <= 9;
 			});
 			if (findNum)
 				num = findNum;
@@ -121,7 +121,6 @@ function buildMovementImage(command, stepsNum){
 			var playerImage = jimp.read("assets/player.png", function(err, img){
 				if (err) throw err;
 				console.log("done with player image");
-				
 				var distance = 32 * stepsNum;
 				var stepDistance = 4;
 				var i = 0;
@@ -166,8 +165,8 @@ function buildMovementImage(command, stepsNum){
 						encoder.setDelay(75);
 					}
 					var pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
-					b.composite(m.clone(), gameState.mapPosition.xPosition + x, gameState.mapPosition.yPosition + y);
-					b.composite(pFrame.clone(), 192, 96);
+					b.composite(m.clone(), gameState.mapPosition.xPosition + x + gameState.mapPosition.offsetX, gameState.mapPosition.yPosition + y + gameState.mapPosition.offsetY);
+					b.composite(pFrame.clone(), gameState.player.offsetX, gameState.player.offsetY);
 					encoder.addFrame(b.bitmap.data);
 					gameState.playerSprite.currentFrame++;
 					if (gameState.playerSprite.currentFrame > 1)
