@@ -240,7 +240,6 @@ function buildDialogImage(npcId){
 							var currentLine = 0, characterCount = 0;
 							var len = 15;
 							var lines = splitter(text, 15);
-							console.log(lines);
 							//Start the main loop of the gif, printing words onscreen letter by letter
 							while (currentLine < lines.length){
 								var b = bg.clone();
@@ -249,7 +248,7 @@ function buildDialogImage(npcId){
 								var d = db.clone();
 								var f = font.clone();
 								
-								if (currentLine == lines.length && characterCount == lines[currentLine].length){
+								if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length){
 									encoder.setDelay(1500);
 								}
 								else if (buffer.length == 0){
@@ -264,26 +263,32 @@ function buildDialogImage(npcId){
 								b.composite(pFrame.clone(), 192, 96);
 								if (buffer.length != 0){
 									b.composite(d.clone(), 75, 158);
-									//line one
-									for (var i = 0; i < bufferLineOne.length; i++){
-										b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i]) * 16, 0, 16, 16), 80 + (16 * i), 158);	
+									if (currentLine == 0){
+										//line one
+										for (var i = 0; i < lines[currentLine].length; i++){
+											b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 158);	
+										}	
 									}
-									//line two
-									for (var i = 0; i < bufferLineTwo.length; i++){
-										b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i]) * 16, 0, 16, 16), 80 + (16 * i), 174);	
+									else{
+										//line one
+										for (var i = 0; i < lines[currentLine - 1].length; i++){
+											b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 158);	
+										}
+										//line two
+										for (var i = 0; i < lines[currentLine].length; i++){
+											b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 174);	
+										}										
 									}
 								}
 								encoder.addFrame(b.bitmap.data);
-								console.log(bufferLineOne);
-								console.log(bufferLineTwo);
-								buffer += lines[currentLine][characterCount];
+								buffer += lines[currentLine][characterCount] || ' ';
 								if (currentLine == 0)
-									bufferLineOne += lines[currentLine][characterCount];
+									bufferLineOne += lines[currentLine][characterCount] || ' ';
 								else{
-									bufferLineTwo += lines[currentLine][characterCount];
+									bufferLineTwo += lines[currentLine][characterCount] || ' ';
 								}
 								characterCount++;
-								if (characterCount >= lines[currentLine].length){
+								if (characterCount > lines[currentLine].length){
 									characterCount = 0;
 									currentLine++;
 									if (currentLine > 1)
