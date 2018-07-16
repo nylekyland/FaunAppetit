@@ -258,7 +258,7 @@ function buildDialogImage(npcId){
 									encoder.setDelay(75);
 								}
 								
-								var pFrame = p.clone().crop(gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
+								var pFrame = p.clone().crop(0, 0, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
 								b.composite(m.clone(), gameState.mapPosition.xPosition, gameState.mapPosition.yPosition);
 								b.composite(pFrame.clone(), 192, 96);
 								if (buffer.length != 0){
@@ -266,17 +266,17 @@ function buildDialogImage(npcId){
 									if (currentLine == 0){
 										//line one
 										for (var i = 0; i < lines[currentLine].length; i++){
-											b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 158);	
+											b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);	
 										}	
 									}
 									else{
 										//line one
 										for (var i = 0; i < lines[currentLine - 1].length; i++){
-											b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 158);	
+											b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);	
 										}
 										//line two
 										for (var i = 0; i < lines[currentLine].length; i++){
-											b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 174);	
+											b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);	
 										}										
 									}
 								}
