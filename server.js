@@ -236,17 +236,10 @@ function buildDialogImage(npcId){
 						if (npc != null){
 							var text = gameState.npcs[npc].dialog;
 							var buffer = "", bufferLineOne = "", bufferLineTwo = "";
-							var currentLine = 0, characterCount = 0, len = 14, prev = 0;
-							var curr = len;
-							var lines = [];
-							while (text[curr]){
-								if (text[curr++] == ' '){
-									lines.push(text.substring(prev, curr));
-									prev = curr;
-									curr += len;
-								}
-							}
-							lines.push(text.substr(prev));
+							var currentLine = 0, characterCount = 0;
+							var len = 15;
+							var lines = splitter(text, 15);
+							console.log(lines);
 							//Start the main loop of the gif, printing words onscreen letter by letter
 							while (buffer.length <= text.length){
 								var b = bg.clone();
@@ -287,7 +280,7 @@ function buildDialogImage(npcId){
 									bufferLineTwo += text[bufferLineTwo.length + (len * currentLine)];
 								}
 								characterCount++;
-								if (characterCount > len){
+								if (characterCount >= len){
 									characterCount = 0;
 									currentLine++;
 									if (currentLine > 1)
@@ -347,4 +340,19 @@ function checkNextToNPC(direction){
 			}
 	}
 	return 0;
+}
+
+function splitter(str, l){
+    var strs = [];
+    while(str.length > l){
+        var pos = str.substring(0, l).lastIndexOf(' ');
+        pos = pos <= 0 ? l : pos;
+        strs.push(str.substring(0, pos));
+        var i = str.indexOf(' ', pos)+1;
+        if(i < pos || i > pos+l)
+            i = pos;
+        str = str.substring(i);
+    }
+    strs.push(str);
+    return strs;
 }
