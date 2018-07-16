@@ -6,7 +6,7 @@ gifEncoder = require('gifencoder');
 var T = new Twit(config);
 
 var mostRecentBotTweet = [];
-var tweets = [{"text":"@NintendoAmerica talk", "favorite_count":999999}];
+var tweets = [{"text":"@NintendoAmerica talk", "favorite_count":9999999}];
 
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
 
@@ -224,7 +224,7 @@ function buildDialogImage(npcId){
 			var playerImage = jimp.read("assets/player.png", function(err, player){
 				if (err) throw err;
 				console.log("done with player image");
-				var dialogBox = new jimp(250, 100, 0xEFEFEFFF, function(err, db){
+				var dialogBox = new jimp(250, 42, 0xEFEFEFFF, function(err, db){
 					if (err) throw err;
 					console.log("done with dialog box");
 					var font = jimp.read("assets/player.png", function(err, font){
@@ -235,7 +235,18 @@ function buildDialogImage(npcId){
 						});
 						if (npc != null){
 							var text = gameState.npcs[npc].dialog;
-							var buffer = "";
+							var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+							var currentLine = 0, characterCount = 0, len = 14, prev = 0;
+							var curr = len;
+							var lines = [];
+							while (text[curr]){
+								if (text[curr++] == ' '){
+									lines.push(text.substring(prev, curr));
+									prev = curr;
+									curr += len;
+								}
+							}
+							lines.push(text.substr(prev));
 							//Start the main loop of the gif, printing words onscreen letter by letter
 							while (buffer.length <= text.length){
 								var b = bg.clone();
@@ -258,11 +269,33 @@ function buildDialogImage(npcId){
 								b.composite(m.clone(), gameState.mapPosition.xPosition, gameState.mapPosition.yPosition);
 								b.composite(pFrame.clone(), 192, 96);
 								if (buffer.length != 0){
-									b.composite(d.clone(), 75, 100);
-									
+									b.composite(d.clone(), 75, 158);
+									//line one
+									for (var i = 0; i < bufferLineOne.length; i++){
+										b.composite(f.clone().crop(0, 0, 16, 16), 80 + (16 * i), 158);	
+									}
+									//line two
+									for (var i = 0; i < bufferLineTwo.length; i++){
+										b.composite(f.clone().crop(0, 0, 16, 16), 80 + (16 * i), 174);	
+									}
 								}
 								encoder.addFrame(b.bitmap.data);
 								buffer += text[buffer.length];
+								if (currentLine == 0)
+									bufferLineOne += text[bufferLineOne.length];
+								else{
+									bufferLineTwo += text[bufferLineTwo.length + (len * currentLine)];
+								}
+								characterCount++;
+								if (characterCount > len){
+									characterCount = 0;
+									currentLine++;
+									if (currentLine > 1)
+									{
+										bufferLineOne = bufferLineTwo;
+										bufferLineTwo = "";
+									}
+								}
 							}
 						}
 						console.log("done with gif");
