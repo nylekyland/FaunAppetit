@@ -6,7 +6,7 @@ gifEncoder = require('gifencoder');
 var T = new Twit(config);
 
 var mostRecentBotTweet = [];
-var tweets = [{"text":"@NintendoAmerica right 9", "favorite_count":9999999}];
+var tweets = [{"text":"@NintendoAmerica up 9", "favorite_count":9999999}];
 var fontString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?:,"
 
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
@@ -133,22 +133,30 @@ function buildMovementImage(command, stepsNum){
 					var y = 0;
 					switch (command){
 						case "left":
-						if (checkCollisions(gameState.player.xPosition + i, gameState.player.yPosition, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight))
-							distance = i;
+						if (checkCollisions(gameState.player.xPosition - i, gameState.player.yPosition, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight)){
+							i = i - stepDistance;
+							distance = i;	
+						}
 						x = i;
 						break;
 						case "right":
-						if (checkCollisions(gameState.player.xPosition - i, gameState.player.yPosition, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight))
-							distance = i;
+						if (checkCollisions(gameState.player.xPosition + i, gameState.player.yPosition, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight)){
+							i = i - stepDistance;
+							distance = i;	
+						}
 						x = -i;
 						break;
 						case "down":
-						if (checkCollisions(gameState.player.xPosition, gameState.player.yPosition + i, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight))
+						if (checkCollisions(gameState.player.xPosition, gameState.player.yPosition + i, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight)){
+							i = i - stepDistance;
 							distance = i;
+						}
 						y = -i;
 						case "up":
-						if (checkCollisions(gameState.player.xPosition, gameState.player.yPosition - i, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight))
-							distance = i;
+						if (checkCollisions(gameState.player.xPosition, gameState.player.yPosition - i, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight)){
+							i = i - stepDistance;
+							distance = i;	
+						}
 						y = i;
 						break;
 					}
@@ -314,9 +322,11 @@ function checkCollisions(x, y, width, height){
 		y < gameState.objects[i].y + gameState.objects[i].height &&
 		y + height > gameState.objects[i].y)
 		{
+			console.log("collision found, x: " + x + ", y: " + y + ", width: " + width + ", height: " + height)
 			return true;
 		}
 	}
+	console.log("no collision, x: " + x + ", y: " + y + ", width: " + width + ", height: " + height)
 	return false;
 }
 
