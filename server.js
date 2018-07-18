@@ -6,7 +6,7 @@ gifEncoder = require('gifencoder');
 var T = new Twit(config);
 
 var mostRecentBotTweet = [];
-var tweets = [{"text":"@NintendoAmerica up 9", "favorite_count":9999999}];
+var tweets = [{"text":"@NintendoAmerica right 9", "favorite_count":9999999}];
 var fontString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?:,"
 
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
@@ -124,6 +124,7 @@ function buildMovementImage(command, stepsNum){
 				var distance = 32 * stepsNum;
 				var stepDistance = 4;
 				var i = 0;
+				var monsterFound = "";
 				
 				while (i <= distance){
 					var b = bg.clone();
@@ -161,7 +162,30 @@ function buildMovementImage(command, stepsNum){
 						break;
 					}
 					
-					if (i == distance){
+					//Check if player is on a grass tile. If so, check random number for new wild encounter
+					if (i % 32 == 0 && i > 0) {
+						if (checkGrass(gameState.player.xPosition, gameState.player.yPosition, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight)) {
+							var randNum = Math.floor(Math.random() * 188);
+							console.log("Random num: " + randNum);
+							if (randNum <= 8 && gameState.currentMap.monsters.rare != null && gameState.currentMap.monsters.rare.length > 0) {
+								console.log("rare monster found");
+								distance = i;
+								monsterFound = "rare";
+							}
+							if (randNum > 8 && randNum <= 20 && gameState.currentMap.monsters.uncommon != null && gameState.currentMap.monsters.uncommon.length > 0) {
+								console.log("uncommon monster found");
+								distance = i;
+								monsterFound = "uncommon";
+							}
+							if (randNum > 20 && randNum <= 40 && gameState.currentMap.monsters.common != null && gameState.currentMap.monsters.common.length > 0) {
+								console.log("common monster found");
+								distance = i;
+								monsterFound = "common";
+							}
+						}
+					}
+					
+					if (i == distance && monsterFound == ""){
 						encoder.setDelay(1500);
 						gameState.playerSprite.currentFrame = 0;
 					}
@@ -180,6 +204,9 @@ function buildMovementImage(command, stepsNum){
 					if (gameState.playerSprite.currentFrame > 1)
 						gameState.playerSprite.currentFrame = 0;
 					i += stepDistance;
+					if (monsterFound != ""){
+						transitionMonster(b.clone(), pFrame.clone(), m.clone(), encoder, monsterFound, x, y);
+					}
 				}
 				console.log("done with gif");
 				encoder.finish();
@@ -213,6 +240,38 @@ function buildMovementImage(command, stepsNum){
 				});
 			});
 		});
+	});
+}
+
+function transitionMonster(b, p, m, encoder, rarity, x, y){
+	var img = new jimp(400, 25, 0x000000FF, function(err, btran){
+		if (err) throw err;
+        console.log("done with black transition image");
+
+        var pos1 = -400;
+        var pos2 = 400;
+        while (pos1 < 0 && pos2 > 0) {
+            b.composite(m.clone(), gameState.mapPosition.xPosition + x + gameState.mapPosition.offsetX, gameState.mapPosition.yPosition + y + gameState.mapPosition.offsetY);
+            b.composite(p.clone(), gameState.player.offsetX, gameState.player.offsetY);
+            for (var i = 0; i < 4; i++) {
+                b.composite(btran.clone(), pos1, i * 50);
+                b.composite(btran.clone(), pos2, (i * 50) + 25);
+            }
+            encoder.addFrame(b.bitmap.data);
+            if (pos1 < 0)
+                pos1 += 16;
+            if (pos2 > 0)
+                pos2 -= 16;
+            if (pos1 == 0 && pos2 == 0)
+            {
+                encoder.setDelay(1500);
+                for (var i = 0; i < 4; i++) {
+                    b.composite(btran.clone(), pos1, i * 50);
+                    b.composite(btran.clone(), pos2, (i * 50) + 25);
+                }
+                encoder.addFrame(b.bitmap.data);
+            }
+        }
 	});
 }
 
@@ -322,12 +381,27 @@ function checkCollisions(x, y, width, height){
 		y < gameState.objects[i].y + gameState.objects[i].height &&
 		y + height > gameState.objects[i].y)
 		{
-			console.log("collision found, x: " + x + ", y: " + y + ", width: " + width + ", height: " + height)
+			//console.log("collision found, x: " + x + ", y: " + y + ", width: " + width + ", height: " + height)
 			return true;
 		}
 	}
-	console.log("no collision, x: " + x + ", y: " + y + ", width: " + width + ", height: " + height)
+	//console.log("no collision, x: " + x + ", y: " + y + ", width: " + width + ", height: " + height)
 	return false;
+}
+
+function checkGrass(x, y, width, height) {
+    console.log("entered checkGrass");
+    for (var i = 0; i < gameState.currentMap.grasses.length; i++) {
+        if (x < gameState.currentMap.grasses[i].x + gameState.currentMap.grasses[i].width &&
+            x + width > gameState.currentMap.grasses[i].x &&
+            y < gameState.currentMap.grasses[i].y + gameState.currentMap.grasses[i].height &&
+            y + height > gameState.currentMap.grasses[i].y) {
+            //console.log("collision found, x: " + x + ", y: " + y + ", width: " + width + ", height: " + height)
+            return true;
+        }
+    }
+    //console.log("no collision, x: " + x + ", y: " + y + ", width: " + width + ", height: " + height)
+    return false;
 }
 
 function checkNextToNPC(direction){
