@@ -1,5 +1,6 @@
 {
   "currentState": "field",
+  "currentMonster": "",
   "currentMap":{
 	"image": "assets/map.png",
 	"grasses":[
@@ -13,20 +14,17 @@
 	"monsters":{
 		"common": [
 				{
-					"id": 1,
-					"name": "bug"
+					"id": 1
 				}
 			],
 		"uncommon":[
 			{
-				"id": 2,
-				"name": "uncommon bug"
+				"id": 2
 			}
 		],
 		"rare":[
 			{
-				"id": 3,
-				"name": "rare bug"
+				"id": 3
 			}
 		]
 	}
@@ -178,5 +176,22 @@
       "width": 32,
       "height": 32
     }
+  ],
+  "monsters":[
+	{
+		"id": 1,
+		"name": "bug",
+		"image": "assets/monster_front.png"
+	},
+	{
+		"id": 2,
+		"name": "uncommon bug",
+		"image": "assets/monster_front.png"
+	},
+	{
+		"id": 3,
+		"name": "rare bug",
+		"image": "assets/monster_front.png"
+	}
   ]
 }

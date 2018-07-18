@@ -110,7 +110,7 @@ function buildMovementImage(command, stepsNum){
 	encoder.createReadStream().pipe(fs.createWriteStream("test.gif"))
 	encoder.start();
 	encoder.setRepeat(0);	//0 for repeat, -1 for no-repeat
-	encoder.setDelay(75); 	//frame delay in ms
+	encoder.setDelay(50); 	//frame delay in ms
 	encoder.setQuality(10);	//image quality, 10 is default
 	var img = new jimp(400, 200, 0xFFFFFFFF, function(err, bg){
 		if (err) throw err;
@@ -124,7 +124,7 @@ function buildMovementImage(command, stepsNum){
 				var distance = 32 * stepsNum;
 				var stepDistance = 4;
 				var i = 0;
-				var monsterFound = "";
+				var monsterFound = 0;
 				
 				while (i <= distance){
 					var b = bg.clone();
@@ -170,22 +170,22 @@ function buildMovementImage(command, stepsNum){
 							if (randNum <= 8 && gameState.currentMap.monsters.rare != null && gameState.currentMap.monsters.rare.length > 0) {
 								console.log("rare monster found");
 								distance = i;
-								monsterFound = "rare";
+                                monsterFound = gameState.currentMap.monsters.rare[Math.floor(Math.random() * gameState.currentMap.monsters.rare.length)].id;
 							}
 							if (randNum > 8 && randNum <= 20 && gameState.currentMap.monsters.uncommon != null && gameState.currentMap.monsters.uncommon.length > 0) {
 								console.log("uncommon monster found");
 								distance = i;
-								monsterFound = "uncommon";
+                                monsterFound = gameState.currentMap.monsters.uncommon[Math.floor(Math.random() * gameState.currentMap.monsters.uncommon.length)].id;
 							}
 							if (randNum > 20 && randNum <= 40 && gameState.currentMap.monsters.common != null && gameState.currentMap.monsters.common.length > 0) {
 								console.log("common monster found");
 								distance = i;
-								monsterFound = "common";
+                                monsterFound = gameState.currentMap.monsters.common[Math.floor(Math.random() * gameState.currentMap.monsters.common.length)].id;
 							}
 						}
 					}
 					
-					if (i == distance && monsterFound == ""){
+					if (i == distance && monsterFound == 0){
 						encoder.setDelay(1500);
 						gameState.playerSprite.currentFrame = 0;
 					}
@@ -194,7 +194,7 @@ function buildMovementImage(command, stepsNum){
 						gameState.playerSprite.currentFrame = 0;
 					}
 					else{
-						encoder.setDelay(75);
+						encoder.setDelay(50);
 					}
 					var pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
 					b.composite(m.clone(), gameState.mapPosition.xPosition + x + gameState.mapPosition.offsetX, gameState.mapPosition.yPosition + y + gameState.mapPosition.offsetY);
@@ -204,12 +204,23 @@ function buildMovementImage(command, stepsNum){
 					if (gameState.playerSprite.currentFrame > 1)
 						gameState.playerSprite.currentFrame = 0;
 					i += stepDistance;
-					if (monsterFound != ""){
-						transitionMonster(b.clone(), pFrame.clone(), m.clone(), encoder, monsterFound, x, y);
-					}
-				}
-				console.log("done with gif");
-				encoder.finish();
+                }
+
+                if (monsterFound != 0) {
+                    transitionMonster(b.clone(), pFrame.clone(), m.clone(), encoder, monsterFound, x, y, function () {
+                        console.log("transitionMonster done");
+                        startBattle(encoder, monsterFound, function () {
+                            gameState.currentState = "battle";
+                            console.log("startBattle done");
+                            console.log("done with gif");
+                            encoder.finish();
+                        });
+                    });
+                }
+                else {
+                    console.log("done with gif");
+                    encoder.finish();
+                }
 				
 				//Update and Save the JSON
 				switch(command){
@@ -243,10 +254,9 @@ function buildMovementImage(command, stepsNum){
 	});
 }
 
-function transitionMonster(b, p, m, encoder, rarity, x, y){
+function transitionMonster(b, p, m, encoder, monsterId, x, y, _callback){
 	var img = new jimp(400, 25, 0x000000FF, function(err, btran){
 		if (err) throw err;
-        console.log("done with black transition image");
 
         var pos1 = -400;
         var pos2 = 400;
@@ -270,9 +280,107 @@ function transitionMonster(b, p, m, encoder, rarity, x, y){
                     b.composite(btran.clone(), pos2, (i * 50) + 25);
                 }
                 encoder.addFrame(b.bitmap.data);
+                _callback();
             }
         }
-	});
+    });
+}
+
+function startBattle(encoder, monsterId, _callback) {
+    encoder.setDelay(50);
+    var btl = new jimp(400, 200, 0xFFFFFFFF, function (err, wbg) {
+        if (err) throw err;
+        gameState.currentMonster = gameState.monsters.find(obj => {
+            return obj.id == monsterId;
+        });
+        jimp.read("assets/monster_front.png", function (err, mon) {
+            if (err) throw err;
+            var monPos = 0;
+            var monPos2 = 400;
+            var done = false;
+
+            while (!done) {
+                var b = wbg.clone();
+                var m = mon.clone();
+                b.composite(m.clone(), monPos, 32);
+                encoder.addFrame(b.bitmap.data);
+                if (monPos < 320)
+                    monPos += 8;
+                //monster is in the right place, start the text
+                if (monPos == 320) {
+                    done = true;
+                }
+            }
+            var dialogBox = new jimp(250, 42, 0xEFEFEFFF, function (err, db) {
+                if (err) throw err;
+                console.log("done with dialog box");
+                var font = jimp.read("assets/font.png", function (err, font) {
+                    if (err) throw err;
+                    console.log("done with font");
+
+                    var text = gameState.currentMonster.name.toUpperCase() + " WANTS TO FIGHT!";
+                    var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                    var currentLine = 0, characterCount = 0;
+                    var len = 15;
+                    var lines = splitter(text, 15);
+                    while (currentLine < lines.length) {
+                        b = wbg.clone();
+                        m = mon.clone();
+                        var d = db.clone();
+                        var f = font.clone();
+
+                        if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                            encoder.setDelay(1500);
+                        }
+                        else if (buffer.length == 0) {
+                            encoder.setDelay(200);
+                        }
+                        else {
+                            encoder.setDelay(50);
+                        }
+
+                        b.composite(m.clone(), monPos, 32);
+                        if (buffer.length != 0) {
+                            b.composite(d.clone(), 75, 158);
+                            if (currentLine == 0) {
+                                //line one
+                                for (var i = 0; i < lines[currentLine].length; i++) {
+                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                }
+                            }
+                            else {
+                                //line one
+                                for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                }
+                                //line two
+                                for (var i = 0; i < lines[currentLine].length; i++) {
+                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                }
+                            }
+                        }
+                        encoder.addFrame(b.bitmap.data);
+                        buffer += lines[currentLine][characterCount] || ' ';
+                        if (currentLine == 0)
+                            bufferLineOne += lines[currentLine][characterCount] || ' ';
+                        else {
+                            bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                        }
+                        characterCount++;
+                        if (characterCount > lines[currentLine].length) {
+                            characterCount = 0;
+                            currentLine++;
+                            if (currentLine > 1) {
+                                bufferLineOne = bufferLineTwo;
+                                bufferLineTwo = "";
+                            }
+                        }
+                    }
+                    _callback();
+                });
+            });
+        });
+    });
 }
 
 function buildDialogImage(npcId){
@@ -280,7 +388,7 @@ function buildDialogImage(npcId){
 	encoder.createReadStream().pipe(fs.createWriteStream("test.gif"))
 	encoder.start();
 	encoder.setRepeat(0);	//0 for repeat, -1 for no-repeat
-	encoder.setDelay(75); 	//frame delay in ms
+	encoder.setDelay(50); 	//frame delay in ms
 	encoder.setQuality(10);	//image quality, 10 is default
 	var img = new jimp(400, 200, 0xFFFFFFFF, function(err, bg){
 		if (err) throw err;
@@ -321,7 +429,7 @@ function buildDialogImage(npcId){
 									encoder.setDelay(200);
 								}
 								else{
-									encoder.setDelay(75);
+									encoder.setDelay(50);
 								}
 								
 								var pFrame = p.clone().crop(0, 0, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
