@@ -1,48 +1,55 @@
 {
-  "currentState": "field",
-  "currentMonster": "",
-  "currentMap":{
-	"image": "assets/map.png",
-	"grasses":[
-		{
-			"x": 32,
-			"y": 32,
-			"width": 256,
-			"height": 256
-		}
-	],
-	"monsters":{
-		"common": [
-				{
-					"id": 1
-				}
-			],
-		"uncommon":[
-			{
-				"id": 2
-			}
-		],
-		"rare":[
-			{
-				"id": 3
-			}
-		]
-	}
+  "currentState": "battle",
+  "currentMonster": {
+    "id": 3,
+    "name": "rare bug",
+    "image": "assets\/monster_front.png"
+  },
+  "currentParty":[
+  ],
+  "currentMap": {
+    "id": 0,
+    "image": "assets\/map.png",
+    "grasses": [
+      {
+        "x": 32,
+        "y": 32,
+        "width": 256,
+        "height": 256
+      }
+    ],
+    "monsters": {
+      "common": [
+        {
+          "id": 1
+        }
+      ],
+      "uncommon": [
+        {
+          "id": 2
+        }
+      ],
+      "rare": [
+        {
+          "id": 3
+        }
+      ]
+    }
   },
   "mapPosition": {
-    "xPosition": 0,
+    "xPosition": -128,
     "yPosition": 0,
     "offsetX": 160,
     "offsetY": 64
   },
   "player": {
-    "xPosition": 32,
+    "xPosition": 160,
     "yPosition": 32,
     "offsetX": 192,
     "offsetY": 96,
     "width": 32,
     "height": 32,
-    "direction": "up"
+    "direction": "right"
   },
   "playerSprite": {
     "width": 64,
@@ -177,21 +184,21 @@
       "height": 32
     }
   ],
-  "monsters":[
-	{
-		"id": 1,
-		"name": "bug",
-		"image": "assets/monster_front.png"
-	},
-	{
-		"id": 2,
-		"name": "uncommon bug",
-		"image": "assets/monster_front.png"
-	},
-	{
-		"id": 3,
-		"name": "rare bug",
-		"image": "assets/monster_front.png"
-	}
+  "monsters": [
+    {
+      "id": 1,
+      "name": "bug",
+      "image": "assets\/monster_front.png"
+    },
+    {
+      "id": 2,
+      "name": "uncommon bug",
+      "image": "assets\/monster_front.png"
+    },
+    {
+      "id": 3,
+      "name": "rare bug",
+      "image": "assets\/monster_front.png"
+    }
   ]
 }

@@ -30,7 +30,8 @@ T.get('search/tweets', {q: 'from:NintendoAmerica', count: 1, result_type: 'recen
 					return 1;
 				return 0;
 			});
-			if (tweets.length > 0){
+            if (tweets.length > 0) {
+                console.log("tweets found");
 				for (var i = 0; i < tweets.length; i++){
 					var handled = handleInput(tweets[i].text);
 					if (handled){
@@ -63,7 +64,7 @@ function handleInput(string){
 		//MOVEMENT
 		var validCommands = [];
 		if (gameState.currentState == "field"){
-			validCommands = ['north', 'south', 'east', 'west', 'up', 'down', 'left', 'right', 'talk']
+            validCommands = ['north', 'south', 'east', 'west', 'up', 'down', 'left', 'right', 'talk'];
 			//Scan tweet for first number that's between 1 and 9, inclusive. If not found, default movement to one square.
 			var num = 1;
 			var findNum = commands.find(function(element){
@@ -100,7 +101,30 @@ function handleInput(string){
 					return true;
 				}
 			}
-		}	
+        }
+        else if (gameState.currentState == "battle") {
+            validCommands = ['fight', 'item', 'monsters', 'run'];
+            for (var i = 0; i < commands.length; i++) {
+                if (validCommands.indexOf(commands[i]) > -1) {
+                    switch (commands[i]) {
+                        case "fight":
+                            buildMovementImage("up", num);
+                            break;
+                        case "item":
+                            buildMovementImage("down", num);
+                            break;
+                        case "monsters":
+                            buildMovementImage("left", num);
+                            break;
+                        case "run":
+                            buildMovementImage("right", num);
+                            break;
+                    }
+                    console.log(commands[i]);
+                    return true;
+                }
+            }
+        }
 	}
 	return false;
 }
@@ -127,7 +151,8 @@ function buildMovementImage(command, stepsNum){
 				var monsterFound = 0;
 				
 				while (i <= distance){
-					var b = bg.clone();
+                    var b = bg.clone();
+                    var white = bg.clone();
 					var p = img.clone();
 					var m = map.clone();
 					var x = 0;
@@ -198,7 +223,9 @@ function buildMovementImage(command, stepsNum){
 					}
 					var pFrame = p.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
 					b.composite(m.clone(), gameState.mapPosition.xPosition + x + gameState.mapPosition.offsetX, gameState.mapPosition.yPosition + y + gameState.mapPosition.offsetY);
-					b.composite(pFrame.clone(), gameState.player.offsetX, gameState.player.offsetY);
+                    b.composite(pFrame.clone(), gameState.player.offsetX, gameState.player.offsetY);
+                    b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                    b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
 					encoder.addFrame(b.bitmap.data);
 					gameState.playerSprite.currentFrame++;
 					if (gameState.playerSprite.currentFrame > 1)
@@ -207,10 +234,9 @@ function buildMovementImage(command, stepsNum){
                 }
 
                 if (monsterFound != 0) {
-                    transitionMonster(b.clone(), pFrame.clone(), m.clone(), encoder, monsterFound, x, y, function () {
+                    transitionMonster(b.clone(), white.clone(), pFrame.clone(), m.clone(), encoder, monsterFound, x, y, function () {
                         console.log("transitionMonster done");
                         startBattle(encoder, monsterFound, function () {
-                            gameState.currentState = "battle";
                             console.log("startBattle done");
                             console.log("done with gif");
                             encoder.finish();
@@ -254,7 +280,7 @@ function buildMovementImage(command, stepsNum){
 	});
 }
 
-function transitionMonster(b, p, m, encoder, monsterId, x, y, _callback){
+function transitionMonster(b, white, p, m, encoder, monsterId, x, y, _callback){
 	var img = new jimp(400, 25, 0x000000FF, function(err, btran){
 		if (err) throw err;
 
@@ -266,6 +292,8 @@ function transitionMonster(b, p, m, encoder, monsterId, x, y, _callback){
             for (var i = 0; i < 4; i++) {
                 b.composite(btran.clone(), pos1, i * 50);
                 b.composite(btran.clone(), pos2, (i * 50) + 25);
+                b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
             }
             encoder.addFrame(b.bitmap.data);
             if (pos1 < 0)
@@ -279,6 +307,8 @@ function transitionMonster(b, p, m, encoder, monsterId, x, y, _callback){
                     b.composite(btran.clone(), pos1, i * 50);
                     b.composite(btran.clone(), pos2, (i * 50) + 25);
                 }
+                b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
                 encoder.addFrame(b.bitmap.data);
                 _callback();
             }
@@ -293,6 +323,7 @@ function startBattle(encoder, monsterId, _callback) {
         gameState.currentMonster = gameState.monsters.find(obj => {
             return obj.id == monsterId;
         });
+        gameState.currentState = "battle";
         jimp.read("assets/monster_front.png", function (err, mon) {
             if (err) throw err;
             var monPos = 0;
@@ -301,13 +332,16 @@ function startBattle(encoder, monsterId, _callback) {
 
             while (!done) {
                 var b = wbg.clone();
+                var white = wbg.clone();
                 var m = mon.clone();
                 b.composite(m.clone(), monPos, 32);
+                b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
                 encoder.addFrame(b.bitmap.data);
-                if (monPos < 320)
+                if (monPos < 280)
                     monPos += 8;
                 //monster is in the right place, start the text
-                if (monPos == 320) {
+                if (monPos == 280) {
                     done = true;
                 }
             }
@@ -359,6 +393,8 @@ function startBattle(encoder, monsterId, _callback) {
                                 }
                             }
                         }
+                        b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                        b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
                         encoder.addFrame(b.bitmap.data);
                         buffer += lines[currentLine][characterCount] || ' ';
                         if (currentLine == 0)
@@ -376,6 +412,31 @@ function startBattle(encoder, monsterId, _callback) {
                             }
                         }
                     }
+                    //Show battle options
+                    encoder.setDelay(3000);
+
+                    b = wbg.clone();
+                    m = mon.clone();
+                    var d = db.clone();
+                    var f = font.clone();
+
+                    b.composite(m.clone(), monPos, 32);
+                    b.composite(d.clone(), 75, 158);
+                    bufferLineOne = "FIGHT     ITEM ";
+                    bufferLineTwo = "MONSTERS  RUN  ";
+
+                    //line one
+                    for (var i = 0; i < bufferLineOne.length; i++) {
+                        b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                    }
+                    //line two
+                    for (var i = 0; i < bufferLineTwo.length; i++) {
+                        b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                    }
+
+                    b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                    b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                    encoder.addFrame(b.bitmap.data);
                     _callback();
                 });
             });
