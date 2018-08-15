@@ -3,9 +3,36 @@
   "currentMonster": {
     "id": 3,
     "name": "rare bug",
-    "image": "assets\/monster_front.png"
+    "image": "assets\/monster_front.png",
+	"moves":[
+		"tackle",
+		"string shot"
+	],
+	"stats":{
+		"attack": 10,
+		"tempAttack": 10,
+		"defense": 10,
+		"tempDefense": 10,
+		"speed": 12
+	  }
   },
   "currentParty":[
+	{
+	  "id": 1,
+      "name": "bug",
+      "image": "assets\/monster_front.png",
+	  "moves":[
+		"tackle",
+		"string shot"
+	  ],
+	  "stats":{
+		"attack": 10,
+		"tempAttack": 10,
+		"defense": 10,
+		"tempDefense": 10,
+		"speed": 10
+	  }
+	}
   ],
   "currentMap": {
     "id": 0,

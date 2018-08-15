@@ -6,7 +6,7 @@ gifEncoder = require('gifencoder');
 var T = new Twit(config);
 
 var mostRecentBotTweet = [];
-var tweets = [{"text":"@NintendoAmerica right 9", "favorite_count":9999999}];
+var tweets = [{"text":"@NintendoAmerica tackle", "favorite_count":9999999}];
 var fontString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?:,"
 
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
@@ -104,20 +104,27 @@ function handleInput(string){
         }
         else if (gameState.currentState == "battle") {
             validCommands = ['fight', 'item', 'monsters', 'run'];
+            var attackCommands = [];
+            for (var i = 0; i < gameState.currentParty[0].moves.length; i++) {
+                attackCommands.push(gameState.currentParty[0].moves[i]);
+            }
             for (var i = 0; i < commands.length; i++) {
+                if (attackCommands.indexOf(commands[i]) > -1) {
+                    buildAttackImage(commands[i]);
+                }
                 if (validCommands.indexOf(commands[i]) > -1) {
                     switch (commands[i]) {
                         case "fight":
-                            buildMovementImage("up", num);
+                            buildAttackMenuImage();
                             break;
                         case "item":
-                            buildMovementImage("down", num);
+                            buildItemMenuImage();
                             break;
                         case "monsters":
-                            buildMovementImage("left", num);
+                            buildMonsterMenuImage();
                             break;
                         case "run":
-                            buildMovementImage("right", num);
+                            buildRunImage();
                             break;
                     }
                     console.log(commands[i]);
@@ -541,6 +548,203 @@ function buildDialogImage(npcId){
 			});
 		});
 	});
+}
+
+function buildAttackImage(attack) {
+    if (gameState.currentMonster) {
+        var encoder = new gifEncoder(400, 200);
+        encoder.createReadStream().pipe(fs.createWriteStream("test.gif"))
+        encoder.start();
+        encoder.setRepeat(0);	//0 for repeat, -1 for no-repeat
+        encoder.setDelay(200); 	//frame delay in ms
+        encoder.setQuality(10);	//image quality, 10 is default
+        //white background
+        var btl = new jimp(400, 200, 0xFFFFFFFF, function (err, wbg) {
+            if (err) throw err;
+            //get monster sprite
+            jimp.read("assets/monster_front.png", function (err, mon) {
+                if (err) throw err;
+                var b = wbg.clone();
+                var white = wbg.clone();
+                var m = mon.clone();
+
+                b.composite(m.clone(), 280, 32);
+                b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                encoder.addFrame(b.bitmap.data);
+                encoder.setDelay(50);
+
+                var dialogBox = new jimp(250, 42, 0xEFEFEFFF, function (err, db) {
+                    if (err) throw err;
+                    console.log("done with dialog box");
+                    var font = jimp.read("assets/font.png", function (err, font) {
+                        if (err) throw err;
+                        console.log("done with font");
+                        //player has higher speed than enemy, player goes first
+                        if (gameState.currentParty[0].stats.speed >= gameState.currentMonster.stats.speed) {
+                            
+                        }
+                        //enemy has higher speed than player, enemy goes first
+                        else {
+                            //pick a random move
+                            var randMove = gameState.currentMonster.moves[Math.floor(Math.random() * gameState.currentMonster.moves.length)];
+                            var text = "ENEMY " + gameState.currentMonster.name.toUpperCase() + " USED " + randMove.toUpperCase() + "!";
+
+                            var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                            var currentLine = 0, characterCount = 0;
+                            var len = 15;
+                            var lines = splitter(text, 15);
+                            //say what attack the enemy is going to do
+                            while (currentLine < lines.length) {
+                                b = wbg.clone();
+                                m = mon.clone();
+                                var d = db.clone();
+                                var f = font.clone();
+
+                                if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                    encoder.setDelay(500);
+                                }
+                                else {
+                                    encoder.setDelay(50);
+                                }
+
+                                b.composite(m.clone(), 280, 32);
+                                if (buffer.length != 0) {
+                                    b.composite(d.clone(), 75, 158);
+                                    if (currentLine == 0) {
+                                        //line one
+                                        for (var i = 0; i < lines[currentLine].length; i++) {
+                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                        }
+                                    }
+                                    else {
+                                        //line one
+                                        for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                        }
+                                        //line two
+                                        for (var i = 0; i < lines[currentLine].length; i++) {
+                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                        }
+                                    }
+                                }
+                                b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                encoder.addFrame(b.bitmap.data);
+                                buffer += lines[currentLine][characterCount] || ' ';
+                                if (currentLine == 0)
+                                    bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                else {
+                                    bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                }
+                                characterCount++;
+                                if (characterCount > lines[currentLine].length) {
+                                    characterCount = 0;
+                                    currentLine++;
+                                    if (currentLine > 1) {
+                                        bufferLineOne = bufferLineTwo;
+                                        bufferLineTwo = "";
+                                    }
+                                }
+                            }
+                            //do the enemy's attack animation
+                            encoder.setDelay(50);
+                            switch (randMove) {
+                                case "tackle":
+                                    for (var i = 0; i < 5; i++) {
+                                        var offset = 0;
+                                        if (i == 1 || i == 3)
+                                            offset = -5;
+                                        else if (i == 2)
+                                            offset = -10;
+
+                                        b = wbg.clone();
+                                        m = mon.clone();
+                                        b.composite(m.clone(), 280 + offset, 32);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                        encoder.addFrame(b.bitmap.data);
+                                    }
+                                    break;
+                                case "string shot":
+                                    break;
+                            }
+                            //do the player's attack now
+                            var text = gameState.currentParty[0].name.toUpperCase() + " USED " + attack.toUpperCase() + "!";
+                            var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                            var currentLine = 0, characterCount = 0;
+                            var len = 15;
+                            var lines = splitter(text, 15);
+                            //say what attack the player is going to do
+                            while (currentLine < lines.length) {
+                                b = wbg.clone();
+                                m = mon.clone();
+                                var d = db.clone();
+                                var f = font.clone();
+
+                                if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                    encoder.setDelay(500);
+                                }
+                                else {
+                                    encoder.setDelay(50);
+                                }
+
+                                b.composite(m.clone(), 280, 32);
+                                if (buffer.length != 0) {
+                                    b.composite(d.clone(), 75, 158);
+                                    if (currentLine == 0) {
+                                        //line one
+                                        for (var i = 0; i < lines[currentLine].length; i++) {
+                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                        }
+                                    }
+                                    else {
+                                        //line one
+                                        for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                        }
+                                        //line two
+                                        for (var i = 0; i < lines[currentLine].length; i++) {
+                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                        }
+                                    }
+                                }
+                                b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                encoder.addFrame(b.bitmap.data);
+                                buffer += lines[currentLine][characterCount] || ' ';
+                                if (currentLine == 0)
+                                    bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                else {
+                                    bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                }
+                                characterCount++;
+                                if (characterCount > lines[currentLine].length) {
+                                    characterCount = 0;
+                                    currentLine++;
+                                    if (currentLine > 1) {
+                                        bufferLineOne = bufferLineTwo;
+                                        bufferLineTwo = "";
+                                    }
+                                }
+                            }
+                            console.log("done with gif");
+                            encoder.finish();
+                        }
+                    });
+                });
+
+                switch (attack) {
+                    case "tackle":
+                        break;
+                }
+            });
+        });
+    }
+    else
+    {
+        console.log("no current enemy found!");
+    }
 }
 
 function checkCollisions(x, y, width, height){
