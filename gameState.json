@@ -6,14 +6,17 @@
     "image": "assets\/monster_front.png",
 	"moves":[
 		"tackle",
-		"string shot"
+		"tackle"
 	],
 	"stats":{
+		"health": 20,
+		"tempHealth": 15,
 		"attack": 10,
 		"tempAttack": 10,
 		"defense": 10,
 		"tempDefense": 10,
-		"speed": 12
+		"speed": 12,
+		"tempSpeed": 12
 	  }
   },
   "currentParty":[
@@ -26,11 +29,14 @@
 		"string shot"
 	  ],
 	  "stats":{
+		"health": 20,
+		"tempHealth": 10,
 		"attack": 10,
 		"tempAttack": 10,
 		"defense": 10,
 		"tempDefense": 10,
-		"speed": 10
+		"speed": 10,
+		"tempSpeed": 10
 	  }
 	}
   ],
