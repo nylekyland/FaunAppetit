@@ -586,7 +586,407 @@ function buildAttackImage(attack) {
                             encoder.setDelay(50);
                             //player has higher speed than enemy, player goes first
                             if (gameState.currentParty[0].stats.speed >= gameState.currentMonster.stats.speed) {
+                                var text = gameState.currentParty[0].name.toUpperCase() + " USED " + attack.toUpperCase() + "!";
+                                var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                var currentLine = 0, characterCount = 0;
+                                var len = 15;
+                                var lines = splitter(text, 15);
+                                //say what attack the player is going to do
+                                while (currentLine < lines.length) {
+                                    b = wbg.clone();
+                                    m = mon.clone();
+                                    l = lif.clone();
+                                    var d = db.clone();
+                                    var f = font.clone();
 
+                                    if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                        encoder.setDelay(500);
+                                    }
+                                    else {
+                                        encoder.setDelay(50);
+                                    }
+
+                                    b.composite(m.clone(), 280, 32);
+                                    if (buffer.length != 0) {
+                                        b.composite(d.clone(), 75, 158);
+                                        if (currentLine == 0) {
+                                            //line one
+                                            for (var i = 0; i < lines[currentLine].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                            }
+                                        }
+                                        else {
+                                            //line one
+                                            for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                            }
+                                            //line two
+                                            for (var i = 0; i < lines[currentLine].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                            }
+                                        }
+                                    }
+                                    if (gameState.currentMonster.stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                    if (gameState.currentParty[0].stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                    encoder.addFrame(b.bitmap.data);
+                                    buffer += lines[currentLine][characterCount] || ' ';
+                                    if (currentLine == 0)
+                                        bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                    else {
+                                        bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                    }
+                                    characterCount++;
+                                    if (characterCount > lines[currentLine].length) {
+                                        characterCount = 0;
+                                        currentLine++;
+                                        if (currentLine > 1) {
+                                            bufferLineOne = bufferLineTwo;
+                                            bufferLineTwo = "";
+                                        }
+                                    }
+                                }
+                                //do the player's attack animation
+                                encoder.setDelay(50);
+                                doesDamage = false;
+                                switch (attack) {
+                                    case "tackle":
+                                        doesDamage = true;
+                                        for (var i = 0; i < 5; i++) {
+                                            var offset = 0;
+                                            if (i == 1 || i == 3)
+                                                offset = -5;
+                                            else if (i == 2)
+                                                offset = -10;
+
+                                            b = wbg.clone();
+                                            m = mon.clone();
+                                            l = lif.clone();
+                                            if (gameState.currentMonster.stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                            if (gameState.currentParty[0].stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                            b.composite(m.clone(), 280 + offset, 32);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                            encoder.addFrame(b.bitmap.data);
+                                        }
+                                        break;
+                                    case "string shot":
+                                        break;
+                                }
+                                //animate enemy's health bar going down
+                                if (doesDamage) {
+                                    var startingHealth = gameState.currentMonster.stats.tempHealth;
+                                    gameState.currentMonster.stats.tempHealth -= gameState.currentParty[0].stats.tempAttack;
+                                    if (gameState.currentMonster.stats.tempHealth <= 0)
+                                        gameState.currentMonster.stats.tempHealth = 0;
+                                    var endHealth = gameState.currentMonster.stats.tempHealth;
+                                    var difference = (startingHealth - endHealth) / 10;
+                                    for (var i = 0; i < 10; i++) {
+                                        b = wbg.clone();
+                                        m = mon.clone();
+                                        l = lif.clone();
+                                        if (gameState.currentParty[0].stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                        if ((100 * ((startingHealth - (difference * i)) / gameState.currentMonster.stats.health)) > 0)
+                                            b.composite(l.clone().resize((100 * ((startingHealth - (difference * i)) / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                        b.composite(m.clone(), 280 + offset, 32);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                        encoder.addFrame(b.bitmap.data);
+                                    }
+                                }
+                                //check if enemy is dead
+                                if (gameState.currentMonster.stats.tempHealth <= 0) {
+                                    var text = "ENEMY " + gameState.currentMonster.name.toUpperCase() + " FAINTED!";
+                                    var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                    var currentLine = 0, characterCount = 0;
+                                    var len = 15;
+                                    var lines = splitter(text, 15);
+                                    //say what attack the player is going to do
+                                    while (currentLine < lines.length) {
+                                        b = wbg.clone();
+                                        m = mon.clone();
+                                        l = lif.clone();
+                                        var d = db.clone();
+                                        var f = font.clone();
+
+                                        if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                            encoder.setDelay(500);
+                                        }
+                                        else {
+                                            encoder.setDelay(50);
+                                        }
+
+                                        b.composite(m.clone(), 280, 32);
+                                        if (buffer.length != 0) {
+                                            b.composite(d.clone(), 75, 158);
+                                            if (currentLine == 0) {
+                                                //line one
+                                                for (var i = 0; i < lines[currentLine].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                }
+                                            }
+                                            else {
+                                                //line one
+                                                for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                }
+                                                //line two
+                                                for (var i = 0; i < lines[currentLine].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                                }
+                                            }
+                                        }
+                                        if (gameState.currentMonster.stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                        if (gameState.currentParty[0].stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                        encoder.addFrame(b.bitmap.data);
+                                        buffer += lines[currentLine][characterCount] || ' ';
+                                        if (currentLine == 0)
+                                            bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                        else {
+                                            bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                        }
+                                        characterCount++;
+                                        if (characterCount > lines[currentLine].length) {
+                                            characterCount = 0;
+                                            currentLine++;
+                                            if (currentLine > 1) {
+                                                bufferLineOne = bufferLineTwo;
+                                                bufferLineTwo = "";
+                                            }
+                                        }
+                                    }
+                                }
+                                //enemy's turn to attack
+                                else {
+                                    //pick a random move
+                                    var randMove = gameState.currentMonster.moves[Math.floor(Math.random() * gameState.currentMonster.moves.length)];
+                                    var text = "ENEMY " + gameState.currentMonster.name.toUpperCase() + " USED " + randMove.toUpperCase() + "!";
+
+                                    var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                    var currentLine = 0, characterCount = 0;
+                                    var len = 15;
+                                    var lines = splitter(text, 15);
+                                    //say what attack the enemy is going to do
+                                    while (currentLine < lines.length) {
+                                        b = wbg.clone();
+                                        m = mon.clone();
+                                        l = lif.clone();
+                                        var d = db.clone();
+                                        var f = font.clone();
+
+                                        if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                            encoder.setDelay(500);
+                                        }
+                                        else {
+                                            encoder.setDelay(50);
+                                        }
+
+                                        if (gameState.currentMonster.stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                        if (gameState.currentParty[0].stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                        b.composite(m.clone(), 280, 32);
+                                        if (buffer.length != 0) {
+                                            b.composite(d.clone(), 75, 158);
+                                            if (currentLine == 0) {
+                                                //line one
+                                                for (var i = 0; i < lines[currentLine].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                }
+                                            }
+                                            else {
+                                                //line one
+                                                for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                }
+                                                //line two
+                                                for (var i = 0; i < lines[currentLine].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                                }
+                                            }
+                                        }
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                        encoder.addFrame(b.bitmap.data);
+                                        buffer += lines[currentLine][characterCount] || ' ';
+                                        if (currentLine == 0)
+                                            bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                        else {
+                                            bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                        }
+                                        characterCount++;
+                                        if (characterCount > lines[currentLine].length) {
+                                            characterCount = 0;
+                                            currentLine++;
+                                            if (currentLine > 1) {
+                                                bufferLineOne = bufferLineTwo;
+                                                bufferLineTwo = "";
+                                            }
+                                        }
+                                    }
+                                    //do the enemy's attack animation
+                                    encoder.setDelay(50);
+                                    var doesDamage = false;
+                                    var type = "normal";
+                                    switch (randMove) {
+                                        case "tackle":
+                                            doesDamage = true;
+                                            for (var i = 0; i < 5; i++) {
+                                                var offset = 0;
+                                                if (i == 1 || i == 3)
+                                                    offset = -5;
+                                                else if (i == 2)
+                                                    offset = -10;
+
+                                                b = wbg.clone();
+                                                m = mon.clone();
+                                                l = lif.clone();
+                                                if (gameState.currentMonster.stats.tempHealth > 0)
+                                                    b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                                if (gameState.currentParty[0].stats.tempHealth > 0)
+                                                    b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                                b.composite(m.clone(), 280 + offset, 32);
+                                                b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                                b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                                encoder.addFrame(b.bitmap.data);
+                                            }
+                                            break;
+                                        case "string shot":
+                                            break;
+                                    }
+                                    //animate the player's health bar going down
+                                    if (doesDamage) {
+                                        var startingHealth = gameState.currentParty[0].stats.tempHealth;
+                                        gameState.currentParty[0].stats.tempHealth -= gameState.currentMonster.stats.tempAttack;
+                                        if (gameState.currentParty[0].stats.tempHealth <= 0)
+                                            gameState.currentParty[0].stats.tempHealth = 0;
+                                        var endHealth = gameState.currentParty[0].stats.tempHealth;
+                                        var difference = (startingHealth - endHealth) / 10;
+                                        for (var i = 1; i <= 10; i++) {
+                                            b = wbg.clone();
+                                            m = mon.clone();
+                                            l = lif.clone();
+                                            if (gameState.currentMonster.stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                            if ((100 * ((startingHealth - (difference * i)) / gameState.currentParty[0].stats.health)) > 0)
+                                                b.composite(l.clone().resize((100 * ((startingHealth - (difference * i)) / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                            b.composite(m.clone(), 280 + offset, 32);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                            encoder.addFrame(b.bitmap.data);
+                                        }
+                                    }
+                                    //check if the player died
+                                    if (gameState.currentParty[0].stats.tempHealth <= 0) {
+                                        gameState.currentParty[0].stats.tempHealth = 0;
+                                        //say that the player fainted
+                                        var text = gameState.currentParty[0].name.toUpperCase() + " FAINTED!";
+                                        var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                        var currentLine = 0, characterCount = 0;
+                                        var len = 15;
+                                        var lines = splitter(text, 15);
+
+                                        while (currentLine < lines.length) {
+                                            b = wbg.clone();
+                                            m = mon.clone();
+                                            l = lif.clone();
+                                            var d = db.clone();
+                                            var f = font.clone();
+
+                                            if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                                encoder.setDelay(500);
+                                            }
+                                            else {
+                                                encoder.setDelay(50);
+                                            }
+
+                                            b.composite(m.clone(), 280, 32);
+                                            if (buffer.length != 0) {
+                                                b.composite(d.clone(), 75, 158);
+                                                if (currentLine == 0) {
+                                                    //line one
+                                                    for (var i = 0; i < lines[currentLine].length; i++) {
+                                                        b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                    }
+                                                }
+                                                else {
+                                                    //line one
+                                                    for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                        b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                    }
+                                                    //line two
+                                                    for (var i = 0; i < lines[currentLine].length; i++) {
+                                                        b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                                    }
+                                                }
+                                            }
+                                            if (gameState.currentMonster.stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                            if (gameState.currentParty[0].stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                            encoder.addFrame(b.bitmap.data);
+                                            buffer += lines[currentLine][characterCount] || ' ';
+                                            if (currentLine == 0)
+                                                bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                            else {
+                                                bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                            }
+                                            characterCount++;
+                                            if (characterCount > lines[currentLine].length) {
+                                                characterCount = 0;
+                                                currentLine++;
+                                                if (currentLine > 1) {
+                                                    bufferLineOne = bufferLineTwo;
+                                                    bufferLineTwo = "";
+                                                }
+                                            }
+                                        }
+                                    }
+                                    //player has not died
+                                    else {
+                                        //Show battle options
+                                        encoder.setDelay(3000);
+
+                                        b = wbg.clone();
+                                        m = mon.clone();
+                                        var d = db.clone();
+                                        var f = font.clone();
+
+                                        b.composite(m.clone(), 280, 32);
+                                        b.composite(d.clone(), 75, 158);
+                                        l = lif.clone();
+                                        bufferLineOne = "FIGHT     ITEM ";
+                                        bufferLineTwo = "MONSTERS  RUN  ";
+
+                                        //line one
+                                        for (var i = 0; i < bufferLineOne.length; i++) {
+                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                        }
+                                        //line two
+                                        for (var i = 0; i < bufferLineTwo.length; i++) {
+                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                        }
+                                        if (gameState.currentMonster.stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                        if (gameState.currentParty[0].stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                        encoder.addFrame(b.bitmap.data);
+                                    }
+                                }
                             }
                             //enemy has higher speed than player, enemy goes first
                             else {
@@ -885,7 +1285,7 @@ function buildAttackImage(attack) {
                                             l = lif.clone();
                                             if (gameState.currentParty[0].stats.tempHealth > 0)
                                                 b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
-                                            if (gameState.currentMonster.stats.tempHealth > 0)
+                                            if ((100 * ((startingHealth - (difference * i)) / gameState.currentMonster.stats.health)) > 0)
                                                 b.composite(l.clone().resize((100 * ((startingHealth - (difference * i)) / gameState.currentMonster.stats.health)), 10), 85, 32);
                                             b.composite(m.clone(), 280 + offset, 32);
                                             b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);

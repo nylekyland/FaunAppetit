@@ -10,7 +10,7 @@
 	],
 	"stats":{
 		"health": 20,
-		"tempHealth": 15,
+		"tempHealth": 10,
 		"attack": 10,
 		"tempAttack": 10,
 		"defense": 10,
@@ -30,7 +30,7 @@
 	  ],
 	  "stats":{
 		"health": 20,
-		"tempHealth": 10,
+		"tempHealth": 15,
 		"attack": 10,
 		"tempAttack": 10,
 		"defense": 10,
