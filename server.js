@@ -6,7 +6,7 @@ gifEncoder = require('gifencoder');
 var T = new Twit(config);
 
 var mostRecentBotTweet = [];
-var tweets = [{"text":"@NintendoAmerica tackle", "favorite_count":9999999}];
+var tweets = [{"text":"@NintendoAmerica run", "favorite_count":9999999}];
 var fontString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?:,"
 
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
@@ -1398,17 +1398,465 @@ function buildAttackImage(attack) {
                         });
                     });
                 });
-
-                switch (attack) {
-                    case "tackle":
-                        break;
-                }
             });
         });
     }
     else
     {
         console.log("no current enemy found!");
+    }
+}
+
+function transitionBackToMovement(b, white, encoder, _callback) {
+    jimp.read("assets/map.png", function (err, map) {
+        if (err) throw err;
+        console.log("done with map image");
+        var playerImage = jimp.read("assets/player.png", function (err, img) {
+            if (err) throw err;
+            console.log("done with player image");
+
+            b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+            b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+            encoder.addFrame(b.bitmap.data);
+
+            encoder.setDelay(1500);
+            gameState.playerSprite.currentFrame = 0;
+            var pFrame = img.clone().crop(gameState.playerSprite.currentFrame * gameState.playerSprite.spriteWidth, gameState.playerSprite.currentAnimation * gameState.playerSprite.spriteHeight, gameState.playerSprite.spriteWidth, gameState.playerSprite.spriteHeight);
+            b.composite(map.clone(), gameState.mapPosition.xPosition + gameState.mapPosition.offsetX, gameState.mapPosition.yPosition + gameState.mapPosition.offsetY);
+            b.composite(pFrame.clone(), gameState.player.offsetX, gameState.player.offsetY);
+            b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+            b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+            encoder.addFrame(b.bitmap.data);
+
+            _callback();
+        });
+    });
+}
+
+function buildRunImage() {
+    if (gameState.currentMonster) {
+        var encoder = new gifEncoder(400, 200);
+        encoder.createReadStream().pipe(fs.createWriteStream("test.gif"))
+        encoder.start();
+        encoder.setRepeat(0);	//0 for repeat, -1 for no-repeat
+        encoder.setDelay(200); 	//frame delay in ms
+        encoder.setQuality(10);	//image quality, 10 is default
+        //white background
+        var btl = new jimp(400, 200, 0xFFFFFFFF, function (err, wbg) {
+            if (err) throw err;
+            //get monster sprite
+            jimp.read("assets/monster_front.png", function (err, mon) {
+                if (err) throw err;
+                var b = wbg.clone();
+                var white = wbg.clone();
+                var m = mon.clone();
+                var dialogBox = new jimp(250, 42, 0xEFEFEFFF, function (err, db) {
+                    if (err) throw err;
+                    console.log("done with dialog box");
+                    var font = jimp.read("assets/font.png", function (err, font) {
+                        if (err) throw err;
+                        console.log("done with font");
+                        var lifebar = new jimp(100, 10, 0x000000FF, function (err, lif) {
+                            if (err) throw err;
+                            console.log("done with making lifebars");
+                            //first frame
+                            b.composite(m.clone(), 280, 32);
+                            b.composite(lif.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                            b.composite(lif.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                            b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                            b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                            encoder.addFrame(b.bitmap.data);
+                            encoder.setDelay(50);
+
+                            //determine chance of running away
+                            var escape = false;
+                            var escapeChance1 = (gameState.currentMonster.stats.tempSpeed / 4) % 256;
+                            if (escapeChance1 == 0)
+                                escape = true;
+                            else {
+                                var escapeChance2 = ((gameState.currentParty[0].stats.tempSpeed * 32) / escapeChance1);
+                                if (escapeChance2 > 255)
+                                    escape = true;
+                                else {
+                                    var escapeChance3 = Math.floor(Math.random() * 255);
+                                    if (escapeChance3 < escapeChance2)
+                                        escape = true;
+                                }
+                            }
+                            if (escape) {
+                                var text = "PLAYER WAS ABLE TO RUN AWAY!";
+
+                                var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                var currentLine = 0, characterCount = 0;
+                                var len = 15;
+                                var lines = splitter(text, 15);
+                                //say what attack the enemy is going to do
+                                while (currentLine < lines.length) {
+                                    b = wbg.clone();
+                                    m = mon.clone();
+                                    l = lif.clone();
+                                    var d = db.clone();
+                                    var f = font.clone();
+
+                                    if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                        encoder.setDelay(500);
+                                    }
+                                    else {
+                                        encoder.setDelay(50);
+                                    }
+
+                                    if (gameState.currentMonster.stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                    if (gameState.currentParty[0].stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                    b.composite(m.clone(), 280, 32);
+                                    if (buffer.length != 0) {
+                                        b.composite(d.clone(), 75, 158);
+                                        if (currentLine == 0) {
+                                            //line one
+                                            for (var i = 0; i < lines[currentLine].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                            }
+                                        }
+                                        else {
+                                            //line one
+                                            for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                            }
+                                            //line two
+                                            for (var i = 0; i < lines[currentLine].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                            }
+                                        }
+                                    }
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                    encoder.addFrame(b.bitmap.data);
+                                    buffer += lines[currentLine][characterCount] || ' ';
+                                    if (currentLine == 0)
+                                        bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                    else {
+                                        bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                    }
+                                    characterCount++;
+                                    if (characterCount > lines[currentLine].length) {
+                                        characterCount = 0;
+                                        currentLine++;
+                                        if (currentLine > 1) {
+                                            bufferLineOne = bufferLineTwo;
+                                            bufferLineTwo = "";
+                                        }
+                                    }
+                                }
+                                transitionBackToMovement(wbg.clone(), white.clone(), encoder, function () {
+                                    console.log("transitionBackToMovement done");
+                                    //transition is done, let's save the gameState
+                                    gameState.currentState = 'field';
+                                    gameState.currentMonster = null;
+                                    gameState.currentParty[0].stats.tempAttack = gameState.currentParty[0].stats.attack;
+                                    gameState.currentParty[0].stats.tempSpeed = gameState.currentParty[0].stats.speed;
+                                    console.log("done with gif");
+                                    encoder.finish();
+                                    var json = JSON.stringify(gameState);
+                                    fs.writeFile('gameState.json', json, 'utf8', function (err) {
+                                        if (err) throw err;
+                                    });
+                                });
+                            }
+                            else {
+                                var text = "PLAYER COULDN'T GET AWAY!";
+
+                                var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                var currentLine = 0, characterCount = 0;
+                                var len = 15;
+                                var lines = splitter(text, 15);
+                                //say what attack the enemy is going to do
+                                while (currentLine < lines.length) {
+                                    b = wbg.clone();
+                                    m = mon.clone();
+                                    l = lif.clone();
+                                    var d = db.clone();
+                                    var f = font.clone();
+
+                                    if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                        encoder.setDelay(500);
+                                    }
+                                    else {
+                                        encoder.setDelay(50);
+                                    }
+
+                                    if (gameState.currentMonster.stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                    if (gameState.currentParty[0].stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                    b.composite(m.clone(), 280, 32);
+                                    if (buffer.length != 0) {
+                                        b.composite(d.clone(), 75, 158);
+                                        if (currentLine == 0) {
+                                            //line one
+                                            for (var i = 0; i < lines[currentLine].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                            }
+                                        }
+                                        else {
+                                            //line one
+                                            for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                            }
+                                            //line two
+                                            for (var i = 0; i < lines[currentLine].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                            }
+                                        }
+                                    }
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                    encoder.addFrame(b.bitmap.data);
+                                    buffer += lines[currentLine][characterCount] || ' ';
+                                    if (currentLine == 0)
+                                        bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                    else {
+                                        bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                    }
+                                    characterCount++;
+                                    if (characterCount > lines[currentLine].length) {
+                                        characterCount = 0;
+                                        currentLine++;
+                                        if (currentLine > 1) {
+                                            bufferLineOne = bufferLineTwo;
+                                            bufferLineTwo = "";
+                                        }
+                                    }
+                                }
+
+                                //pick a random move
+                                var randMove = gameState.currentMonster.moves[Math.floor(Math.random() * gameState.currentMonster.moves.length)];
+                                var text = "ENEMY " + gameState.currentMonster.name.toUpperCase() + " USED " + randMove.toUpperCase() + "!";
+
+                                var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                var currentLine = 0, characterCount = 0;
+                                var len = 15;
+                                var lines = splitter(text, 15);
+                                //say what attack the enemy is going to do
+                                while (currentLine < lines.length) {
+                                    b = wbg.clone();
+                                    m = mon.clone();
+                                    l = lif.clone();
+                                    var d = db.clone();
+                                    var f = font.clone();
+
+                                    if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                        encoder.setDelay(500);
+                                    }
+                                    else {
+                                        encoder.setDelay(50);
+                                    }
+
+                                    if (gameState.currentMonster.stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                    if (gameState.currentParty[0].stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                    b.composite(m.clone(), 280, 32);
+                                    if (buffer.length != 0) {
+                                        b.composite(d.clone(), 75, 158);
+                                        if (currentLine == 0) {
+                                            //line one
+                                            for (var i = 0; i < lines[currentLine].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                            }
+                                        }
+                                        else {
+                                            //line one
+                                            for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                            }
+                                            //line two
+                                            for (var i = 0; i < lines[currentLine].length; i++) {
+                                                b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                            }
+                                        }
+                                    }
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                    encoder.addFrame(b.bitmap.data);
+                                    buffer += lines[currentLine][characterCount] || ' ';
+                                    if (currentLine == 0)
+                                        bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                    else {
+                                        bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                    }
+                                    characterCount++;
+                                    if (characterCount > lines[currentLine].length) {
+                                        characterCount = 0;
+                                        currentLine++;
+                                        if (currentLine > 1) {
+                                            bufferLineOne = bufferLineTwo;
+                                            bufferLineTwo = "";
+                                        }
+                                    }
+                                }
+                                //do the enemy's attack animation
+                                encoder.setDelay(50);
+                                var doesDamage = false;
+                                var type = "normal";
+                                switch (randMove) {
+                                    case "tackle":
+                                        doesDamage = true;
+                                        for (var i = 0; i < 5; i++) {
+                                            var offset = 0;
+                                            if (i == 1 || i == 3)
+                                                offset = -5;
+                                            else if (i == 2)
+                                                offset = -10;
+
+                                            b = wbg.clone();
+                                            m = mon.clone();
+                                            l = lif.clone();
+                                            if (gameState.currentMonster.stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                            if (gameState.currentParty[0].stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                            b.composite(m.clone(), 280 + offset, 32);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                            encoder.addFrame(b.bitmap.data);
+                                        }
+                                        break;
+                                    case "string shot":
+                                        break;
+                                }
+                                //animate the player's health bar going down
+                                if (doesDamage) {
+                                    var startingHealth = gameState.currentParty[0].stats.tempHealth;
+                                    gameState.currentParty[0].stats.tempHealth -= gameState.currentMonster.stats.tempAttack;
+                                    if (gameState.currentParty[0].stats.tempHealth <= 0)
+                                        gameState.currentParty[0].stats.tempHealth = 0;
+                                    var endHealth = gameState.currentParty[0].stats.tempHealth;
+                                    var difference = (startingHealth - endHealth) / 10;
+                                    for (var i = 1; i <= 10; i++) {
+                                        b = wbg.clone();
+                                        m = mon.clone();
+                                        l = lif.clone();
+                                        if (gameState.currentMonster.stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                        if ((100 * ((startingHealth - (difference * i)) / gameState.currentParty[0].stats.health)) > 0)
+                                            b.composite(l.clone().resize((100 * ((startingHealth - (difference * i)) / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                        b.composite(m.clone(), 280 + offset, 32);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                        encoder.addFrame(b.bitmap.data);
+                                    }
+                                }
+                                //check if the player died
+                                if (gameState.currentParty[0].stats.tempHealth <= 0) {
+                                    gameState.currentParty[0].stats.tempHealth = 0;
+                                    //say that the player fainted
+                                    var text = gameState.currentParty[0].name.toUpperCase() + " FAINTED!";
+                                    var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                    var currentLine = 0, characterCount = 0;
+                                    var len = 15;
+                                    var lines = splitter(text, 15);
+
+                                    while (currentLine < lines.length) {
+                                        b = wbg.clone();
+                                        m = mon.clone();
+                                        l = lif.clone();
+                                        var d = db.clone();
+                                        var f = font.clone();
+
+                                        if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                            encoder.setDelay(500);
+                                        }
+                                        else {
+                                            encoder.setDelay(50);
+                                        }
+
+                                        b.composite(m.clone(), 280, 32);
+                                        if (buffer.length != 0) {
+                                            b.composite(d.clone(), 75, 158);
+                                            if (currentLine == 0) {
+                                                //line one
+                                                for (var i = 0; i < lines[currentLine].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                }
+                                            }
+                                            else {
+                                                //line one
+                                                for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                }
+                                                //line two
+                                                for (var i = 0; i < lines[currentLine].length; i++) {
+                                                    b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                                }
+                                            }
+                                        }
+                                        if (gameState.currentMonster.stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                        if (gameState.currentParty[0].stats.tempHealth > 0)
+                                            b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                        b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                        encoder.addFrame(b.bitmap.data);
+                                        buffer += lines[currentLine][characterCount] || ' ';
+                                        if (currentLine == 0)
+                                            bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                        else {
+                                            bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                        }
+                                        characterCount++;
+                                        if (characterCount > lines[currentLine].length) {
+                                            characterCount = 0;
+                                            currentLine++;
+                                            if (currentLine > 1) {
+                                                bufferLineOne = bufferLineTwo;
+                                                bufferLineTwo = "";
+                                            }
+                                        }
+                                    }
+                                    console.log("done with gif");
+                                    encoder.finish();
+                                }
+                                //player has not died
+                                else {
+                                    //Show battle options
+                                    encoder.setDelay(3000);
+
+                                    b = wbg.clone();
+                                    m = mon.clone();
+                                    var d = db.clone();
+                                    var f = font.clone();
+
+                                    b.composite(m.clone(), 280, 32);
+                                    b.composite(d.clone(), 75, 158);
+                                    l = lif.clone();
+                                    bufferLineOne = "FIGHT     ITEM ";
+                                    bufferLineTwo = "MONSTERS  RUN  ";
+
+                                    //line one
+                                    for (var i = 0; i < bufferLineOne.length; i++) {
+                                        b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                    }
+                                    //line two
+                                    for (var i = 0; i < bufferLineTwo.length; i++) {
+                                        b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                    }
+                                    if (gameState.currentMonster.stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                    if (gameState.currentParty[0].stats.tempHealth > 0)
+                                        b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                    b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                    encoder.addFrame(b.bitmap.data);
+                                    console.log("done with gif");
+                                    encoder.finish();
+                                }
+                            }
+                        });
+                    });
+                });
+            });
+        });
     }
 }
 
