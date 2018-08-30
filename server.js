@@ -6,7 +6,7 @@ gifEncoder = require('gifencoder');
 var T = new Twit(config);
 
 var mostRecentBotTweet = [];
-var tweets = [{"text":"@NintendoAmerica run", "favorite_count":9999999}];
+var tweets = [{"text":"@NintendoAmerica tackle", "favorite_count":9999999}];
 var fontString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?:,"
 
 var gameState = JSON.parse(fs.readFileSync('gameState.json', 'utf8'));
@@ -578,8 +578,10 @@ function buildAttackImage(attack) {
                             console.log("done with making lifebars");
                             //first frame
                             b.composite(m.clone(), 280, 32);
-                            b.composite(lif.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
-                            b.composite(lif.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                            if (gameState.currentMonster.stats.tempHealth > 0)
+                                b.composite(lif.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                            if (gameState.currentParty[0].stats.tempHealth > 0)
+                                b.composite(lif.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
                             b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
                             b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
                             encoder.addFrame(b.bitmap.data);
@@ -953,6 +955,98 @@ function buildAttackImage(attack) {
                                                 }
                                             }
                                         }
+                                        var aliveCount = 0;
+                                        for (var i = 0; i < gameState.currentParty.length; i++) {
+                                            if (gameState.currentParty[0].stats.tempHealth > 0)
+                                                aliveCount++;
+                                        }
+                                        //player has a monster still alive
+                                        if (aliveCount > 0)
+                                        {
+                                            buildMonsterMenuImage();
+                                        }
+                                        //all player monsters have died, force a run
+                                        else {
+                                            var text = "PLAYER HAS NO MONSTERS LEFT TO FIGHT! PLAYER HAD TO RUN AWAY!";
+
+                                            var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                            var currentLine = 0, characterCount = 0;
+                                            var len = 15;
+                                            var lines = splitter(text, 15);
+                                            //say what attack the enemy is going to do
+                                            while (currentLine < lines.length) {
+                                                b = wbg.clone();
+                                                m = mon.clone();
+                                                l = lif.clone();
+                                                var d = db.clone();
+                                                var f = font.clone();
+
+                                                if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                                    encoder.setDelay(500);
+                                                }
+                                                else {
+                                                    encoder.setDelay(50);
+                                                }
+
+                                                if (gameState.currentMonster.stats.tempHealth > 0)
+                                                    b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                                if (gameState.currentParty[0].stats.tempHealth > 0)
+                                                    b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                                b.composite(m.clone(), 280, 32);
+                                                if (buffer.length != 0) {
+                                                    b.composite(d.clone(), 75, 158);
+                                                    if (currentLine == 0) {
+                                                        //line one
+                                                        for (var i = 0; i < lines[currentLine].length; i++) {
+                                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                        }
+                                                    }
+                                                    else {
+                                                        //line one
+                                                        for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                        }
+                                                        //line two
+                                                        for (var i = 0; i < lines[currentLine].length; i++) {
+                                                            b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                                        }
+                                                    }
+                                                }
+                                                b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                                b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                                encoder.addFrame(b.bitmap.data);
+                                                buffer += lines[currentLine][characterCount] || ' ';
+                                                if (currentLine == 0)
+                                                    bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                                else {
+                                                    bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                                }
+                                                characterCount++;
+                                                if (characterCount > lines[currentLine].length) {
+                                                    characterCount = 0;
+                                                    currentLine++;
+                                                    if (currentLine > 1) {
+                                                        bufferLineOne = bufferLineTwo;
+                                                        bufferLineTwo = "";
+                                                    }
+                                                }
+                                            }
+                                            transitionBackToMovement(wbg.clone(), white.clone(), encoder, function () {
+                                                console.log("transitionBackToMovement done");
+                                                //transition is done, let's save the gameState
+                                                gameState.currentState = 'field';
+                                                gameState.currentMonster = null;
+                                                gameState.currentParty[0].stats.tempAttack = gameState.currentParty[0].stats.attack;
+                                                gameState.currentParty[0].stats.tempSpeed = gameState.currentParty[0].stats.speed;
+                                                gameState.currentParty[gameState.currentParty.length - 1].stats.tempHealth = 1;
+                                                console.log("done with gif");
+                                                encoder.finish();
+                                                var json = JSON.stringify(gameState);
+                                                fs.writeFile('gameState.json', json, 'utf8', function (err) {
+                                                    if (err) throw err;
+                                                });
+                                            });
+                                        }
                                     }
                                     //player has not died
                                     else {
@@ -1175,6 +1269,97 @@ function buildAttackImage(attack) {
                                             }
                                         }
                                     }
+                                    var aliveCount = 0;
+                                    for (var i = 0; i < gameState.currentParty.length; i++) {
+                                        if (gameState.currentParty[0].stats.tempHealth > 0)
+                                            aliveCount++;
+                                    }
+                                    //player has a monster still alive
+                                    if (aliveCount > 0) {
+                                        buildMonsterMenuImage();
+                                    }
+                                    //all player monsters have died, force a run
+                                    else {
+                                        var text = "PLAYER HAS NO MONSTERS LEFT TO FIGHT! PLAYER HAD TO RUN AWAY!";
+
+                                        var buffer = "", bufferLineOne = "", bufferLineTwo = "";
+                                        var currentLine = 0, characterCount = 0;
+                                        var len = 15;
+                                        var lines = splitter(text, 15);
+                                        //say what attack the enemy is going to do
+                                        while (currentLine < lines.length) {
+                                            b = wbg.clone();
+                                            m = mon.clone();
+                                            l = lif.clone();
+                                            var d = db.clone();
+                                            var f = font.clone();
+
+                                            if (currentLine == lines.length - 1 && characterCount == lines[currentLine].length) {
+                                                encoder.setDelay(500);
+                                            }
+                                            else {
+                                                encoder.setDelay(50);
+                                            }
+
+                                            if (gameState.currentMonster.stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
+                                            if (gameState.currentParty[0].stats.tempHealth > 0)
+                                                b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
+                                            b.composite(m.clone(), 280, 32);
+                                            if (buffer.length != 0) {
+                                                b.composite(d.clone(), 75, 158);
+                                                if (currentLine == 0) {
+                                                    //line one
+                                                    for (var i = 0; i < lines[currentLine].length; i++) {
+                                                        b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                    }
+                                                }
+                                                else {
+                                                    //line one
+                                                    for (var i = 0; i < lines[currentLine - 1].length; i++) {
+                                                        b.composite(f.clone().crop(fontString.indexOf(bufferLineOne[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 163);
+                                                    }
+                                                    //line two
+                                                    for (var i = 0; i < lines[currentLine].length; i++) {
+                                                        b.composite(f.clone().crop(fontString.indexOf(bufferLineTwo[i] || ' ') * 16, 0, 16, 16), 80 + (16 * i), 179);
+                                                    }
+                                                }
+                                            }
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 0, 0);
+                                            b.composite(white.clone().crop(0, 0, 75, 200), 325, 0);
+                                            encoder.addFrame(b.bitmap.data);
+                                            buffer += lines[currentLine][characterCount] || ' ';
+                                            if (currentLine == 0)
+                                                bufferLineOne += lines[currentLine][characterCount] || ' ';
+                                            else {
+                                                bufferLineTwo += lines[currentLine][characterCount] || ' ';
+                                            }
+                                            characterCount++;
+                                            if (characterCount > lines[currentLine].length) {
+                                                characterCount = 0;
+                                                currentLine++;
+                                                if (currentLine > 1) {
+                                                    bufferLineOne = bufferLineTwo;
+                                                    bufferLineTwo = "";
+                                                }
+                                            }
+                                        }
+                                        transitionBackToMovement(wbg.clone(), white.clone(), encoder, function () {
+                                            console.log("transitionBackToMovement done");
+                                            //transition is done, let's save the gameState
+                                            gameState.currentState = 'field';
+                                            gameState.currentMonster = null;
+                                            gameState.currentParty[0].stats.tempAttack = gameState.currentParty[0].stats.attack;
+                                            gameState.currentParty[0].stats.tempSpeed = gameState.currentParty[0].stats.speed;
+                                            gameState.currentParty[gameState.currentParty.length - 1].stats.tempHealth = 1;
+                                            console.log("done with gif");
+                                            encoder.finish();
+                                            var json = JSON.stringify(gameState);
+                                            fs.writeFile('gameState.json', json, 'utf8', function (err) {
+                                                if (err) throw err;
+                                            });
+                                        });
+                                    }
                                 }
                                 //player has not died
                                 else {
@@ -1359,6 +1544,20 @@ function buildAttackImage(attack) {
                                                 }
                                             }
                                         }
+                                        transitionBackToMovement(wbg.clone(), white.clone(), encoder, function () {
+                                            console.log("transitionBackToMovement done");
+                                            //transition is done, let's save the gameState
+                                            gameState.currentState = 'field';
+                                            gameState.currentMonster = null;
+                                            gameState.currentParty[0].stats.tempAttack = gameState.currentParty[0].stats.attack;
+                                            gameState.currentParty[0].stats.tempSpeed = gameState.currentParty[0].stats.speed;
+                                            console.log("done with gif");
+                                            encoder.finish();
+                                            var json = JSON.stringify(gameState);
+                                            fs.writeFile('gameState.json', json, 'utf8', function (err) {
+                                                if (err) throw err;
+                                            });
+                                        });
                                     }
                                     else {
                                         //Show battle options
@@ -1392,6 +1591,10 @@ function buildAttackImage(attack) {
                                         encoder.addFrame(b.bitmap.data);
                                     }
                                 }
+                                var json = JSON.stringify(gameState);
+                                fs.writeFile('gameState.json', json, 'utf8', function (err) {
+                                    if (err) throw err;
+                                });
                                 console.log("done with gif");
                                 encoder.finish();
                             }
