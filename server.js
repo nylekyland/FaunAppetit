@@ -278,7 +278,7 @@ function buildMovementImage(command, stepsNum){
 						gameState.mapPosition.yPosition -= distance;
 						break;
 				}
-				var json = JSON.stringify(gameState);
+				var json = JSON.stringify(gameState, null, '\t');
 				fs.writeFile('gameState.json', json, 'utf8', function(err){
 					if (err) throw err;
 				});
@@ -597,7 +597,7 @@ function buildAttackImage(attack) {
                                 while (currentLine < lines.length) {
                                     b = wbg.clone();
                                     m = mon.clone();
-                                    l = lif.clone();
+                                    var l = lif.clone();
                                     var d = db.clone();
                                     var f = font.clone();
 
@@ -666,7 +666,7 @@ function buildAttackImage(attack) {
 
                                             b = wbg.clone();
                                             m = mon.clone();
-                                            l = lif.clone();
+                                            var l = lif.clone();
                                             if (gameState.currentMonster.stats.tempHealth > 0)
                                                 b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
                                             if (gameState.currentParty[0].stats.tempHealth > 0)
@@ -691,7 +691,7 @@ function buildAttackImage(attack) {
                                     for (var i = 0; i < 10; i++) {
                                         b = wbg.clone();
                                         m = mon.clone();
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         if (gameState.currentParty[0].stats.tempHealth > 0)
                                             b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
                                         if ((100 * ((startingHealth - (difference * i)) / gameState.currentMonster.stats.health)) > 0)
@@ -713,7 +713,7 @@ function buildAttackImage(attack) {
                                     while (currentLine < lines.length) {
                                         b = wbg.clone();
                                         m = mon.clone();
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         var d = db.clone();
                                         var f = font.clone();
 
@@ -782,7 +782,7 @@ function buildAttackImage(attack) {
                                     while (currentLine < lines.length) {
                                         b = wbg.clone();
                                         m = mon.clone();
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         var d = db.clone();
                                         var f = font.clone();
 
@@ -852,7 +852,7 @@ function buildAttackImage(attack) {
 
                                                 b = wbg.clone();
                                                 m = mon.clone();
-                                                l = lif.clone();
+                                                var l = lif.clone();
                                                 if (gameState.currentMonster.stats.tempHealth > 0)
                                                     b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
                                                 if (gameState.currentParty[0].stats.tempHealth > 0)
@@ -877,7 +877,7 @@ function buildAttackImage(attack) {
                                         for (var i = 1; i <= 10; i++) {
                                             b = wbg.clone();
                                             m = mon.clone();
-                                            l = lif.clone();
+                                            var l = lif.clone();
                                             if (gameState.currentMonster.stats.tempHealth > 0)
                                                 b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
                                             if ((100 * ((startingHealth - (difference * i)) / gameState.currentParty[0].stats.health)) > 0)
@@ -901,7 +901,7 @@ function buildAttackImage(attack) {
                                         while (currentLine < lines.length) {
                                             b = wbg.clone();
                                             m = mon.clone();
-                                            l = lif.clone();
+                                            var l = lif.clone();
                                             var d = db.clone();
                                             var f = font.clone();
 
@@ -977,7 +977,7 @@ function buildAttackImage(attack) {
                                             while (currentLine < lines.length) {
                                                 b = wbg.clone();
                                                 m = mon.clone();
-                                                l = lif.clone();
+                                                var l = lif.clone();
                                                 var d = db.clone();
                                                 var f = font.clone();
 
@@ -1041,7 +1041,7 @@ function buildAttackImage(attack) {
                                                 gameState.currentParty[gameState.currentParty.length - 1].stats.tempHealth = 1;
                                                 console.log("done with gif");
                                                 encoder.finish();
-                                                var json = JSON.stringify(gameState);
+                                                var json = JSON.stringify(gameState, null, '\t');
                                                 fs.writeFile('gameState.json', json, 'utf8', function (err) {
                                                     if (err) throw err;
                                                 });
@@ -1060,7 +1060,7 @@ function buildAttackImage(attack) {
 
                                         b.composite(m.clone(), 280, 32);
                                         b.composite(d.clone(), 75, 158);
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         bufferLineOne = "FIGHT     ITEM ";
                                         bufferLineTwo = "MONSTERS  RUN  ";
 
@@ -1096,7 +1096,7 @@ function buildAttackImage(attack) {
                                 while (currentLine < lines.length) {
                                     b = wbg.clone();
                                     m = mon.clone();
-                                    l = lif.clone();
+                                    var l = lif.clone();
                                     var d = db.clone();
                                     var f = font.clone();
 
@@ -1166,7 +1166,7 @@ function buildAttackImage(attack) {
 
                                             b = wbg.clone();
                                             m = mon.clone();
-                                            l = lif.clone();
+                                            var l = lif.clone();
                                             if (gameState.currentMonster.stats.tempHealth > 0)
                                                 b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
                                             if (gameState.currentParty[0].stats.tempHealth > 0)
@@ -1191,7 +1191,7 @@ function buildAttackImage(attack) {
                                     for (var i = 1; i <= 10; i++) {
                                         b = wbg.clone();
                                         m = mon.clone();
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         if (gameState.currentMonster.stats.tempHealth > 0)
                                             b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
                                         if ((100 * ((startingHealth - (difference * i)) / gameState.currentParty[0].stats.health)) > 0)
@@ -1215,7 +1215,7 @@ function buildAttackImage(attack) {
                                     while (currentLine < lines.length) {
                                         b = wbg.clone();
                                         m = mon.clone();
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         var d = db.clone();
                                         var f = font.clone();
 
@@ -1290,7 +1290,7 @@ function buildAttackImage(attack) {
                                         while (currentLine < lines.length) {
                                             b = wbg.clone();
                                             m = mon.clone();
-                                            l = lif.clone();
+                                            var l = lif.clone();
                                             var d = db.clone();
                                             var f = font.clone();
 
@@ -1354,7 +1354,7 @@ function buildAttackImage(attack) {
                                             gameState.currentParty[gameState.currentParty.length - 1].stats.tempHealth = 1;
                                             console.log("done with gif");
                                             encoder.finish();
-                                            var json = JSON.stringify(gameState);
+                                            var json = JSON.stringify(gameState, null, '\t');
                                             fs.writeFile('gameState.json', json, 'utf8', function (err) {
                                                 if (err) throw err;
                                             });
@@ -1373,7 +1373,7 @@ function buildAttackImage(attack) {
                                     while (currentLine < lines.length) {
                                         b = wbg.clone();
                                         m = mon.clone();
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         var d = db.clone();
                                         var f = font.clone();
 
@@ -1442,7 +1442,7 @@ function buildAttackImage(attack) {
 
                                                 b = wbg.clone();
                                                 m = mon.clone();
-                                                l = lif.clone();
+                                                var l = lif.clone();
                                                 if (gameState.currentMonster.stats.tempHealth > 0)
                                                     b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
                                                 if (gameState.currentParty[0].stats.tempHealth > 0)
@@ -1467,7 +1467,7 @@ function buildAttackImage(attack) {
                                         for (var i = 0; i < 10; i++) {
                                             b = wbg.clone();
                                             m = mon.clone();
-                                            l = lif.clone();
+                                            var l = lif.clone();
                                             if (gameState.currentParty[0].stats.tempHealth > 0)
                                                 b.composite(l.clone().resize((100 * (gameState.currentParty[0].stats.tempHealth / gameState.currentParty[0].stats.health)), 10), 225, 138);
                                             if ((100 * ((startingHealth - (difference * i)) / gameState.currentMonster.stats.health)) > 0)
@@ -1490,7 +1490,7 @@ function buildAttackImage(attack) {
                                         while (currentLine < lines.length) {
                                             b = wbg.clone();
                                             m = mon.clone();
-                                            l = lif.clone();
+                                            var l = lif.clone();
                                             var d = db.clone();
                                             var f = font.clone();
 
@@ -1553,7 +1553,7 @@ function buildAttackImage(attack) {
                                             gameState.currentParty[0].stats.tempSpeed = gameState.currentParty[0].stats.speed;
                                             console.log("done with gif");
                                             encoder.finish();
-                                            var json = JSON.stringify(gameState);
+                                            var json = JSON.stringify(gameState, null, '\t');
                                             fs.writeFile('gameState.json', json, 'utf8', function (err) {
                                                 if (err) throw err;
                                             });
@@ -1570,7 +1570,7 @@ function buildAttackImage(attack) {
 
                                         b.composite(m.clone(), 280, 32);
                                         b.composite(d.clone(), 75, 158);
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         bufferLineOne = "FIGHT     ITEM ";
                                         bufferLineTwo = "MONSTERS  RUN  ";
 
@@ -1591,7 +1591,7 @@ function buildAttackImage(attack) {
                                         encoder.addFrame(b.bitmap.data);
                                     }
                                 }
-                                var json = JSON.stringify(gameState);
+                                var json = JSON.stringify(gameState, null, '\t');
                                 fs.writeFile('gameState.json', json, 'utf8', function (err) {
                                     if (err) throw err;
                                 });
@@ -1697,7 +1697,7 @@ function buildRunImage() {
                                 while (currentLine < lines.length) {
                                     b = wbg.clone();
                                     m = mon.clone();
-                                    l = lif.clone();
+                                    var l = lif.clone();
                                     var d = db.clone();
                                     var f = font.clone();
 
@@ -1760,7 +1760,7 @@ function buildRunImage() {
                                     gameState.currentParty[0].stats.tempSpeed = gameState.currentParty[0].stats.speed;
                                     console.log("done with gif");
                                     encoder.finish();
-                                    var json = JSON.stringify(gameState);
+                                    var json = JSON.stringify(gameState, null, '\t');
                                     fs.writeFile('gameState.json', json, 'utf8', function (err) {
                                         if (err) throw err;
                                     });
@@ -1777,7 +1777,7 @@ function buildRunImage() {
                                 while (currentLine < lines.length) {
                                     b = wbg.clone();
                                     m = mon.clone();
-                                    l = lif.clone();
+                                    var l = lif.clone();
                                     var d = db.clone();
                                     var f = font.clone();
 
@@ -1844,7 +1844,7 @@ function buildRunImage() {
                                 while (currentLine < lines.length) {
                                     b = wbg.clone();
                                     m = mon.clone();
-                                    l = lif.clone();
+                                    var l = lif.clone();
                                     var d = db.clone();
                                     var f = font.clone();
 
@@ -1914,7 +1914,7 @@ function buildRunImage() {
 
                                             b = wbg.clone();
                                             m = mon.clone();
-                                            l = lif.clone();
+                                            var l = lif.clone();
                                             if (gameState.currentMonster.stats.tempHealth > 0)
                                                 b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
                                             if (gameState.currentParty[0].stats.tempHealth > 0)
@@ -1939,7 +1939,7 @@ function buildRunImage() {
                                     for (var i = 1; i <= 10; i++) {
                                         b = wbg.clone();
                                         m = mon.clone();
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         if (gameState.currentMonster.stats.tempHealth > 0)
                                             b.composite(l.clone().resize((100 * (gameState.currentMonster.stats.tempHealth / gameState.currentMonster.stats.health)), 10), 85, 32);
                                         if ((100 * ((startingHealth - (difference * i)) / gameState.currentParty[0].stats.health)) > 0)
@@ -1963,7 +1963,7 @@ function buildRunImage() {
                                     while (currentLine < lines.length) {
                                         b = wbg.clone();
                                         m = mon.clone();
-                                        l = lif.clone();
+                                        var l = lif.clone();
                                         var d = db.clone();
                                         var f = font.clone();
 
@@ -2032,7 +2032,7 @@ function buildRunImage() {
 
                                     b.composite(m.clone(), 280, 32);
                                     b.composite(d.clone(), 75, 158);
-                                    l = lif.clone();
+                                    var l = lif.clone();
                                     bufferLineOne = "FIGHT     ITEM ";
                                     bufferLineTwo = "MONSTERS  RUN  ";
 
